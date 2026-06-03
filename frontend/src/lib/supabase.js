@@ -1,0 +1,31 @@
+import { createClient } from "@supabase/supabase-js";
+
+const url = import.meta.env.VITE_SUPABASE_URL;
+const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+export const supabase =
+  url && anonKey
+    ? createClient(url, anonKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true
+        }
+      })
+    : null;
+
+export function createLocalSession({ name, email }) {
+  return {
+    access_token: `local-${crypto.randomUUID()}`,
+    user: {
+      id: `local-${email.toLowerCase()}`,
+      email,
+      user_metadata: {
+        name
+      },
+      app_metadata: {
+        provider: "local_credentials"
+      }
+    }
+  };
+}

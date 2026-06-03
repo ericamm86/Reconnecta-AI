@@ -1,0 +1,37 @@
+{
+  "name": "reconnect-ai-backend",
+  "version": "1.0.0",
+  "description": "REST API for Reconnect AI - Intelligent Network OS.",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "seed": "node src/db/seed.js"
+  },
+  "keywords": [
+    "networking",
+    "crm",
+    "ai",
+    "openai",
+    "supabase",
+    "neon"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.87.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "helmet": "^8.1.0",
+    "marked": "^17.0.1",
+    "morgan": "^1.10.1",
+    "openai": "^6.10.0",
+    "pg": "^8.16.3",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}

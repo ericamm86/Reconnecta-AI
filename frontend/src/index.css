@@ -1,0 +1,181 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #f8fafc;
+  background: #080b12;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #080b12;
+  overscroll-behavior-y: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.prose p,
+.prose ul {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* Premium high-tech accent layer: cosmetic only. */
+:root {
+  --accent-mint: #49d6a8;
+  --accent-cyan: #61d7f4;
+  --accent-blue: #3b82f6;
+  --accent-violet: #8b5cf6;
+  --accent-gradient: linear-gradient(135deg, var(--accent-mint), var(--accent-cyan) 54%, var(--accent-blue));
+  --accent-glow: 0 18px 70px rgba(97, 215, 244, 0.18), 0 0 32px rgba(73, 214, 168, 0.1);
+}
+
+/* Landing page aurora behind the authentication card. */
+main.min-h-screen.bg-ink > section > form {
+  position: relative;
+  isolation: isolate;
+  border-color: rgba(97, 215, 244, 0.18);
+  box-shadow: 0 28px 100px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(97, 215, 244, 0.06);
+}
+
+main.min-h-screen.bg-ink > section > form::before {
+  position: absolute;
+  inset: -96px -84px;
+  z-index: -1;
+  content: "";
+  background:
+    radial-gradient(circle at 45% 28%, rgba(97, 215, 244, 0.26), transparent 36%),
+    radial-gradient(circle at 68% 58%, rgba(139, 92, 246, 0.18), transparent 42%),
+    radial-gradient(circle at 28% 72%, rgba(73, 214, 168, 0.12), transparent 38%);
+  filter: blur(34px);
+  opacity: 0.86;
+  pointer-events: none;
+}
+
+/* Micro-points in the graph/circuit background on login and app pages. */
+main.min-h-screen.bg-ink > .fixed.inset-0,
+div.min-h-screen.bg-ink > .fixed.inset-0 {
+  overflow: hidden;
+}
+
+main.min-h-screen.bg-ink > .fixed.inset-0::before,
+div.min-h-screen.bg-ink > .fixed.inset-0::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background-image:
+    radial-gradient(circle, rgba(73, 214, 168, 0.92) 0 1px, transparent 1.8px),
+    radial-gradient(circle, rgba(97, 215, 244, 0.82) 0 1px, transparent 1.7px),
+    radial-gradient(circle, rgba(139, 92, 246, 0.38) 0 1px, transparent 1.9px);
+  background-position: 8% 16%, 82% 24%, 68% 78%;
+  background-size: 118px 118px, 154px 154px, 210px 210px;
+  opacity: 0.28;
+  mask-image: radial-gradient(circle at 50% 42%, black 0 52%, transparent 82%);
+  pointer-events: none;
+}
+
+main.min-h-screen.bg-ink > .fixed.inset-0::after,
+div.min-h-screen.bg-ink > .fixed.inset-0::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    linear-gradient(110deg, transparent 0 31%, rgba(97, 215, 244, 0.06) 31.2%, transparent 31.6% 100%),
+    linear-gradient(28deg, transparent 0 56%, rgba(73, 214, 168, 0.055) 56.2%, transparent 56.55% 100%);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Gradient for primary CTAs and visual product tags. */
+button[class~="bg-mint"],
+a[class~="bg-mint"],
+div[class*="bg-mint/10"][class*="text-mint"] {
+  background-image: var(--accent-gradient);
+}
+
+button[class~="bg-mint"],
+a[class~="bg-mint"] {
+  border: 1px solid rgba(97, 215, 244, 0.28);
+  color: #061018;
+  box-shadow: var(--accent-glow);
+}
+
+button[class~="bg-mint"]:hover,
+a[class~="bg-mint"]:hover {
+  filter: brightness(1.07) saturate(1.08);
+}
+
+div[class*="bg-mint/10"][class*="text-mint"] {
+  border-color: rgba(97, 215, 244, 0.34);
+  color: #061018;
+  box-shadow: 0 0 34px rgba(97, 215, 244, 0.12);
+}
+
+/* Internal page panel continuity: subtle cyan edge glow without changing layout. */
+section[id],
+aside[class*="bg-black/20"],
+header[class*="bg-ink/80"],
+div[class*="bg-white/[0.04]"],
+div[class*="bg-white/[0.06]"] {
+  border-color: rgba(97, 215, 244, 0.12);
+}
+
+section[id] {
+  position: relative;
+}
+
+section[id]::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(73, 214, 168, 0.055), transparent 34%),
+    radial-gradient(circle at 88% 18%, rgba(97, 215, 244, 0.06), transparent 38%);
+  pointer-events: none;
+}
+
+div[class*="shadow-glow"],
+button[class*="shadow-glow"] {
+  box-shadow: var(--accent-glow);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: rgba(97, 215, 244, 0.62) !important;
+  box-shadow: 0 0 0 3px rgba(97, 215, 244, 0.1);
+}

@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+.env
+.env.*
+!.env.example
+.vercel/
+.DS_Store
+*.log
+npm-debug.log*
+
+# Local runtime data
+backend/src/data/local-db.json
+
+# Temporary visual QA screenshots generated during development
+/*.png

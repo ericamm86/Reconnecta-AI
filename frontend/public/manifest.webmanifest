@@ -1,0 +1,44 @@
+{
+  "id": "/",
+  "name": "Reconnect AI - Intelligent Network OS",
+  "short_name": "Reconnect AI",
+  "description": "Network Intelligence CRM com grafo operacional, timeline e IA de relacionamento.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#080b12",
+  "theme_color": "#080b12",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Novo contato",
+      "short_name": "Contato",
+      "url": "/#network-graph",
+      "icons": [{ "src": "/icons/maskable-icon.svg", "sizes": "512x512", "type": "image/svg+xml" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icons/maskable-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ]
+}

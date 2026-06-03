@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-06-03T12:00:00.000Z",
+  "nodes": [
+    {
+      "id": "contact:c-aurora",
+      "type": "contact",
+      "label": "Joao Martins",
+      "contactId": "c-aurora",
+      "score": 88,
+      "ddd": "11",
+      "scope": ["INTERNAL_PRIVATE"],
+      "sourceOrigin": "manual"
+    },
+    {
+      "id": "contact:c-nova",
+      "type": "contact",
+      "label": "Marina Lopes",
+      "contactId": "c-nova",
+      "score": 74,
+      "ddd": "61",
+      "scope": ["INTERNAL_PRIVATE", "PUBLIC_PLATFORM_PROFILE"],
+      "sourceOrigin": "google_contacts"
+    },
+    {
+      "id": "tag:ai",
+      "type": "tag",
+      "label": "ai",
+      "weight": 1
+    },
+    {
+      "id": "tag:investidor",
+      "type": "tag",
+      "label": "investidor",
+      "weight": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge:c-aurora:investidor",
+      "source": "contact:c-aurora",
+      "target": "tag:investidor",
+      "type": "HAS_TAG",
+      "weight": 4
+    },
+    {
+      "id": "edge:c-nova:ai",
+      "source": "contact:c-nova",
+      "target": "tag:ai",
+      "type": "HAS_TAG",
+      "weight": 4
+    }
+  ]
+}
