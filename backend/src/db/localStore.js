@@ -1,11 +1,17 @@
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { contacts, groupCustomFields, groupMembers, interactions, publicProfiles, sharedGroups } from "../data/demoStore.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const defaultDbPath = path.resolve(__dirname, "../data/local-db.json");
-const dbPath = process.env.LOCAL_DB_PATH ? path.resolve(process.env.LOCAL_DB_PATH) : defaultDbPath;
+const serverlessDbPath = path.join(os.tmpdir(), "reconnect-ai-local-db.json");
+const dbPath = process.env.LOCAL_DB_PATH
+  ? path.resolve(process.env.LOCAL_DB_PATH)
+  : process.env.VERCEL
+    ? serverlessDbPath
+    : defaultDbPath;
 
 const initialData = {
   profiles: [
