@@ -3,9 +3,21 @@ import { env } from "../config/env.js";
 
 export const hasDatabase = Boolean(env.databaseUrl);
 
+function normalizeConnectionString(connectionString) {
+  if (env.nodeEnv !== "production") return connectionString;
+
+  try {
+    const url = new URL(connectionString);
+    url.searchParams.set("sslmode", "no-verify");
+    return url.toString();
+  } catch {
+    return connectionString;
+  }
+}
+
 export const pool = hasDatabase
   ? new pg.Pool({
-      connectionString: env.databaseUrl,
+      connectionString: normalizeConnectionString(env.databaseUrl),
       ssl: env.nodeEnv === "production" ? { rejectUnauthorized: false } : false
     })
   : null;
