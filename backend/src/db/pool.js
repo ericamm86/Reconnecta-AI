@@ -1,7 +1,9 @@
+import { readFile } from "node:fs/promises";
 import pg from "pg";
 import { env } from "../config/env.js";
 
 export const hasDatabase = Boolean(env.databaseUrl);
+let schemaReady;
 
 function normalizeConnectionString(connectionString) {
   if (env.nodeEnv !== "production") return connectionString;
@@ -22,10 +24,17 @@ export const pool = hasDatabase
     })
   : null;
 
+async function ensureSchema() {
+  if (!pool) return;
+  schemaReady ??= readFile(new URL("./schema.sql", import.meta.url), "utf8").then((schema) => pool.query(schema));
+  await schemaReady;
+}
+
 export async function query(text, params = []) {
   if (!pool) {
     throw new Error("DATABASE_URL is not configured.");
   }
 
+  await ensureSchema();
   return pool.query(text, params);
 }
