@@ -179,3 +179,63 @@ select:focus {
   border-color: rgba(97, 215, 244, 0.62) !important;
   box-shadow: 0 0 0 3px rgba(97, 215, 244, 0.1);
 }
+
+body.theme-light {
+  color: #102033;
+  background: #eef4f8;
+}
+
+body.theme-light .bg-ink,
+body.theme-light [class*="bg-ink/"] {
+  background-color: rgba(241, 247, 250, 0.94) !important;
+}
+
+body.theme-light .bg-panel,
+body.theme-light [class*="bg-panel"] {
+  background-color: #ffffff !important;
+}
+
+body.theme-light [class*="bg-black/"],
+body.theme-light [class*="bg-white/[0.04]"],
+body.theme-light [class*="bg-white/[0.06]"],
+body.theme-light [class*="bg-white/[0.08]"] {
+  background-color: rgba(255, 255, 255, 0.76) !important;
+}
+
+body.theme-light .text-white,
+body.theme-light .text-slate-100,
+body.theme-light .text-slate-200,
+body.theme-light .text-slate-300 {
+  color: #102033 !important;
+}
+
+body.theme-light .text-slate-400,
+body.theme-light .text-slate-500 {
+  color: #52647a !important;
+}
+
+body.theme-light .border-line,
+body.theme-light [class*="border-line"] {
+  border-color: rgba(30, 57, 82, 0.14) !important;
+}
+
+body.theme-light input,
+body.theme-light textarea,
+body.theme-light select {
+  color: #102033 !important;
+  background-color: rgba(255, 255, 255, 0.82) !important;
+}
+
+body.theme-light input::placeholder,
+body.theme-light textarea::placeholder {
+  color: #718096 !important;
+}
+
+body.theme-light main.min-h-screen.bg-ink > .fixed.inset-0,
+body.theme-light div.min-h-screen.bg-ink > .fixed.inset-0 {
+  background: radial-gradient(circle at 20% 0%, rgba(73, 214, 168, 0.18), transparent 34%), radial-gradient(circle at 88% 12%, rgba(59, 130, 246, 0.13), transparent 30%), linear-gradient(180deg, #f7fbfd, #eaf3f7 50%, #f7fbfd) !important;
+}
+
+body.theme-light section[id]::before {
+  background: radial-gradient(circle at 12% 0%, rgba(73, 214, 168, 0.12), transparent 34%), radial-gradient(circle at 88% 18%, rgba(59, 130, 246, 0.11), transparent 38%);
+}

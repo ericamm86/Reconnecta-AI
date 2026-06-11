@@ -1,4 +1,4 @@
-import crypto from "node:crypto";
+﻿import crypto from "node:crypto";
 import { readLocalDb, updateLocalDb } from "../../db/localStore.js";
 import { hasDatabase, query } from "../../db/pool.js";
 import { deriveDddFromPhone } from "../../utils/phone.js";
@@ -277,6 +277,35 @@ export async function importContacts(ownerId, payload) {
   };
 }
 
+function uniqStrings(values = []) {
+  return [...new Set(values.filter(Boolean).map((value) => String(value).trim()).filter(Boolean))];
+}
+
+function mergeContactRecords(left, right) {
+  return {
+    ...left,
+    name: left.name || right.name,
+    avatarUrl: left.avatarUrl || right.avatarUrl,
+    description: [left.description, right.description].filter(Boolean).join("\n\n"),
+    email: left.email || right.email,
+    emails: uniqStrings([...(left.emails || []), left.email, ...(right.emails || []), right.email]).map((email) => email.toLowerCase()),
+    phones: uniqStrings([...(left.phones || []), ...(right.phones || [])]),
+    company: left.company || right.company,
+    role: left.role || right.role,
+    area: left.area || right.area,
+    proximity: Math.max(left.proximity || 0, right.proximity || 0),
+    tags: uniqStrings([...(left.tags || []), ...(right.tags || [])]),
+    sourceOrigin: left.sourceOrigin === right.sourceOrigin ? left.sourceOrigin : "other",
+    socialLinks: { ...(right.socialLinks || {}), ...(left.socialLinks || {}) },
+    currentDemand: left.currentDemand || right.currentDemand,
+    problemSolved: left.problemSolved || right.problemSolved,
+    internalNotes: [left.internalNotes, right.internalNotes].filter(Boolean).join("\n\n"),
+    recordScopes: uniqStrings([...(left.recordScopes || []), ...(right.recordScopes || [])]),
+    linkedUserId: left.linkedUserId || right.linkedUserId,
+    customValues: { ...(right.customValues || {}), ...(left.customValues || {}) }
+  };
+}
+
 export async function listPotentialDuplicates(ownerId) {
   const data = await listContacts(ownerId, {});
   const pairs = [];
@@ -309,6 +338,33 @@ export async function ignoreDuplicatePair(_ownerId, payload) {
     id: [payload.leftContactId, payload.rightContactId].sort().join(":"),
     status: "ignored",
     reason: payload.reason || "user_ignored"
+  };
+}
+
+export async function mergeDuplicatePair(ownerId, payload) {
+  const left = await getContact(ownerId, payload.leftContactId);
+  const right = await getContact(ownerId, payload.rightContactId);
+  if (!left || !right || left.id === right.id) return null;
+
+  const mergedPayload = mergeContactRecords(left, right);
+  const merged = await updateContact(ownerId, left.id, mergedPayload);
+
+  if (!hasDatabase) {
+    await updateLocalDb((localDb) => {
+      localDb.interactions.forEach((interaction) => {
+        if (interaction.contactId === right.id) interaction.contactId = left.id;
+      });
+      localDb.contacts = localDb.contacts.filter((contact) => contact.id !== right.id);
+    });
+  } else {
+    await query("update interactions set contact_id = $1 where contact_id = $2", [left.id, right.id]);
+    await query("delete from contacts where owner_id = $1 and id = $2", [ownerId, right.id]);
+  }
+
+  return {
+    id: [left.id, right.id].sort().join(":"),
+    status: "merged",
+    mergedContact: merged
   };
 }
 
@@ -353,3 +409,4 @@ export async function buildInternalGraph(ownerId) {
     edges
   };
 }
+

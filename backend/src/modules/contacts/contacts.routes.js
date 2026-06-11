@@ -8,6 +8,7 @@ import {
   getContact,
   ignoreDuplicatePair,
   importContacts,
+  mergeDuplicatePair,
   listContacts,
   listPotentialDuplicates,
   updateContact
@@ -110,6 +111,16 @@ contactsRouter.post(
   asyncHandler(async (req, res) => {
     const payload = duplicateActionSchema.parse(req.body);
     const data = await ignoreDuplicatePair(req.user.id, payload);
+    res.json({ data });
+  })
+);
+
+contactsRouter.post(
+  "/duplicates/merge",
+  asyncHandler(async (req, res) => {
+    const payload = duplicateActionSchema.parse(req.body);
+    const data = await mergeDuplicatePair(req.user.id, payload);
+    if (!data) return res.status(404).json({ error: "Duplicate pair not found" });
     res.json({ data });
   })
 );

@@ -8,7 +8,7 @@ function isPasswordStrong(password) {
   return password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
 }
 
-export function AuthPanel({ mode, setMode, form, setForm, onSubmit }) {
+export function AuthPanel({ mode, setMode, form, setForm, onSubmit, onMagicLink, onOAuth, onAppleSoon, submitting = false }) {
   const isRegister = mode === "register";
   const emailHasError = form.email.length > 0 && !isEmailValid(form.email);
   const passwordHasError = form.password.length > 0 && isRegister && !isPasswordStrong(form.password);
@@ -64,9 +64,10 @@ export function AuthPanel({ mode, setMode, form, setForm, onSubmit }) {
                 key={value}
                 type="button"
                 onClick={() => setMode(value)}
+                disabled={submitting}
                 className={`h-10 rounded-md text-sm font-black transition ${
                   mode === value ? "bg-mint text-ink shadow-glow" : "text-slate-400 hover:bg-white/8 hover:text-white"
-                }`}
+                } disabled:cursor-not-allowed disabled:opacity-60`}
               >
                 {label}
               </button>
@@ -85,6 +86,7 @@ export function AuthPanel({ mode, setMode, form, setForm, onSubmit }) {
                   placeholder="Seu nome"
                   autoComplete="name"
                   required={isRegister}
+                  disabled={submitting}
                 />
               </div>
             </label>
@@ -102,6 +104,7 @@ export function AuthPanel({ mode, setMode, form, setForm, onSubmit }) {
                 type="email"
                 autoComplete="email"
                 required
+                disabled={submitting}
               />
             </div>
             {emailHasError && <span className="mt-2 block text-xs font-semibold text-amber">Informe um e-mail valido.</span>}
@@ -118,6 +121,7 @@ export function AuthPanel({ mode, setMode, form, setForm, onSubmit }) {
               autoComplete={isRegister ? "new-password" : "current-password"}
               minLength={isRegister ? 8 : 1}
               required
+              disabled={submitting}
             />
             {isRegister && (
               <span className={`mt-2 block text-xs font-semibold ${passwordHasError ? "text-amber" : "text-slate-500"}`}>
@@ -126,8 +130,37 @@ export function AuthPanel({ mode, setMode, form, setForm, onSubmit }) {
             )}
           </label>
 
-          <button className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-mint px-5 text-sm font-black text-ink transition hover:bg-cyan">
-            {isRegister ? "Cadastrar" : "Entrar"}
+          <div className="mt-5 grid gap-2">
+            <button
+              type="button"
+              onClick={() => onOAuth?.("google")}
+              disabled={submitting}
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-line bg-white/[0.04] px-4 text-sm font-black text-white transition hover:border-cyan/50 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Continuar com Google
+            </button>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => onMagicLink?.(form.email)}
+                disabled={submitting || emailHasError || !form.email}
+                className="h-10 rounded-lg border border-line bg-black/20 px-3 text-xs font-black uppercase tracking-[0.12em] text-slate-300 transition hover:border-mint/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                Magic link
+              </button>
+              <button
+                type="button"
+                onClick={onAppleSoon}
+                disabled={submitting}
+                className="h-10 rounded-lg border border-line bg-black/20 px-3 text-xs font-black uppercase tracking-[0.12em] text-slate-400 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Apple em breve
+              </button>
+            </div>
+          </div>
+
+          <button disabled={submitting} className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-mint px-5 text-sm font-black text-ink transition hover:bg-cyan disabled:cursor-not-allowed disabled:opacity-70">
+            {submitting ? "Aguarde..." : isRegister ? "Cadastrar" : "Entrar"}
             <ArrowRight size={18} />
           </button>
         </form>

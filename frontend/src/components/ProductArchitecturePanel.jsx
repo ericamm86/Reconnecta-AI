@@ -29,7 +29,7 @@ const importSources = [
   ["LinkedIn Export", "Sincronizacao planejada para uma proxima versao", "Em breve"]
 ];
 
-export function ProductArchitecturePanel({ onToast }) {
+export function ProductArchitecturePanel({ onToast, session, onRefresh }) {
   const [duplicates, setDuplicates] = useState([]);
   const [graph, setGraph] = useState(null);
   const [csvText, setCsvText] = useState("name,email,phones,tags\nAna Torres,ana@example.com,+55 85 98888-0000,\"startup,design\"");
@@ -83,10 +83,39 @@ export function ProductArchitecturePanel({ onToast }) {
     }
   }
 
+  async function importGoogleContacts() {
+    const accessToken = session?.provider_token;
+    if (!accessToken) {
+      onToast("Entre com Google para liberar a importacao real de Google Contacts.");
+      return;
+    }
+
+    try {
+      const { data } = await api.importGoogleContacts({ accessToken });
+      setDuplicates(data.duplicateCandidates || []);
+      const suffix = data.job.importedRows === 1 ? "" : "s";
+      onToast(`${data.job.importedRows} contato${suffix} importado${suffix} do Google.`);
+      onRefresh?.();
+    } catch (error) {
+      onToast(error.message || "Falha ao importar Google Contacts.");
+    }
+  }
+
   async function ignoreDuplicate(pair) {
     await api.ignoreDuplicate({ leftContactId: pair.left.id, rightContactId: pair.right.id, reason: "user_ignored" }).catch(() => null);
     setDuplicates((current) => current.filter((item) => item.id !== pair.id));
     onToast("Par marcado como nao duplicado.");
+  }
+
+  async function mergeDuplicate(pair) {
+    try {
+      const { data } = await api.mergeDuplicate({ leftContactId: pair.left.id, rightContactId: pair.right.id, reason: pair.reason });
+      setDuplicates((current) => current.filter((item) => item.id !== pair.id));
+      onToast(`${data.mergedContact.name} consolidado com sucesso.`);
+      onRefresh?.(data.mergedContact.id);
+    } catch (error) {
+      onToast(error.message || "Nao foi possivel aprovar o merge.");
+    }
   }
 
   return (
@@ -130,9 +159,15 @@ export function ProductArchitecturePanel({ onToast }) {
                   <h3 className="font-black text-white">{name}</h3>
                   <p className="text-sm text-slate-400">{detail}</p>
                 </div>
-                <span title={status === "Em breve" ? "Funcionalidade fora do escopo do MVP, com interface reservada para evolucao." : ""} className={`rounded-md px-2 py-1 text-xs font-black ${status === "Em breve" ? "bg-white/8 text-slate-400" : "bg-mint/10 text-mint"}`}>
-                  {status}
-                </span>
+                {name === "Google Contacts" ? (
+                  <button onClick={importGoogleContacts} className="rounded-md bg-mint px-2 py-1 text-xs font-black text-ink">
+                    Importar
+                  </button>
+                ) : (
+                  <span title={status === "Em breve" ? "Funcionalidade fora do escopo do MVP, com interface reservada para evolucao." : ""} className={`rounded-md px-2 py-1 text-xs font-black ${status === "Em breve" ? "bg-white/8 text-slate-400" : "bg-mint/10 text-mint"}`}>
+                    {status}
+                  </span>
+                )}
               </article>
             ))}
           </div>
@@ -172,7 +207,7 @@ export function ProductArchitecturePanel({ onToast }) {
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <span className="rounded-md bg-cyan/10 px-2 py-1 text-xs font-bold text-cyan">{pair.reason}</span>
-                    <button className="rounded-md bg-mint px-2 py-1 text-xs font-black text-ink">Aprovar merge</button>
+                    <button onClick={() => mergeDuplicate(pair)} className="rounded-md bg-mint px-2 py-1 text-xs font-black text-ink">Aprovar merge</button>
                     <button className="rounded-md border border-line px-2 py-1 text-xs font-bold text-white">Revisar</button>
                     <button onClick={() => ignoreDuplicate(pair)} className="rounded-md border border-line px-2 py-1 text-xs font-bold text-slate-300">Ignorar</button>
                   </div>

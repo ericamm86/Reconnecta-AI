@@ -1,6 +1,6 @@
-import { Bell, BrainCircuit, Command, Network, Plus, Search, ShieldCheck } from "lucide-react";
+import { Bell, BrainCircuit, Command, Moon, Network, Plus, Search, ShieldCheck, Sun } from "lucide-react";
 
-export function Shell({ children, query, setQuery, session, onLogout, onCreateContact }) {
+export function Shell({ children, query, setQuery, session, onLogout, onCreateContact, theme = "dark", onToggleTheme }) {
   const navItems = [
     ["Inicio", "#onboarding", Command],
     ["Painel", "#command-center", Command],
@@ -56,7 +56,15 @@ export function Shell({ children, query, setQuery, session, onLogout, onCreateCo
                 className="h-11 w-full rounded-lg border border-line bg-white/[0.04] pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-mint/50 focus:bg-white/[0.07]"
               />
             </div>
-            <button className="grid h-11 w-11 place-items-center rounded-lg border border-line bg-white/[0.04] text-slate-300 transition hover:border-mint/40 hover:text-white">
+            <button
+              onClick={onToggleTheme}
+              className="grid h-11 w-11 place-items-center rounded-lg border border-line bg-white/[0.04] text-slate-300 transition hover:border-mint/40 hover:text-white"
+              aria-label={theme === "dark" ? "Ativar light mode" : "Ativar dark mode"}
+              title={theme === "dark" ? "Light mode" : "Dark mode"}
+            >
+              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <button className="grid h-11 w-11 place-items-center rounded-lg border border-line bg-white/[0.04] text-slate-300 transition hover:border-mint/40 hover:text-white" aria-label="Notificacoes">
               <Bell size={18} />
             </button>
           </div>

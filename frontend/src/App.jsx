@@ -33,6 +33,25 @@ const emptyInteraction = {
   notesMarkdown: ""
 };
 
+function getAuthErrorMessage(error) {
+  const message = error?.message || "Nao foi possivel autenticar.";
+  const waitMatch = message.match(/after\s+(\d+)\s+seconds/i);
+
+  if (/security purposes/i.test(message) && waitMatch) {
+    return `Aguarde ${waitMatch[1]} segundos antes de tentar novamente.`;
+  }
+
+  if (/security purposes/i.test(message)) {
+    return "Aguarde alguns segundos antes de tentar novamente.";
+  }
+
+  if (/email rate limit exceeded/i.test(message)) {
+    return "Limite de envio de email atingido. Aguarde alguns minutos antes de tentar novamente.";
+  }
+
+  return message;
+}
+
 function App() {
   const [authMode, setAuthMode] = useState("login");
   const [authForm, setAuthForm] = useState({ name: "", email: "", password: "" });
@@ -46,8 +65,16 @@ function App() {
   const [contactForm, setContactForm] = useState(emptyContact);
   const [interactionForm, setInteractionForm] = useState(emptyInteraction);
   const [toast, setToast] = useState("");
+  const [authSubmitting, setAuthSubmitting] = useState(false);
+  const [theme, setTheme] = useState(() => window.localStorage.getItem("reconnect-theme") || "dark");
   const auth = useAuth(setToast);
   const userProfile = useSupabaseProfile(auth.session, setToast);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.body.classList.toggle("theme-light", theme === "light");
+    window.localStorage.setItem("reconnect-theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     async function sync() {
@@ -127,15 +154,45 @@ function App() {
 
   async function handleAuth(event) {
     event.preventDefault();
+    if (authSubmitting) return;
+    setAuthSubmitting(true);
+
     try {
       if (authMode === "register") {
         await auth.signUpWithPassword(authForm);
+        setAuthMode("login");
+        setAuthForm((current) => ({ ...current, password: "" }));
         return;
       }
 
       await auth.signInWithPassword(authForm);
     } catch (error) {
-      setToast(error.message);
+      setToast(getAuthErrorMessage(error));
+    } finally {
+      setAuthSubmitting(false);
+    }
+  }
+
+  async function handleMagicLink(email) {
+    if (authSubmitting) return;
+    setAuthSubmitting(true);
+    try {
+      await auth.signInWithMagicLink(email);
+    } catch (error) {
+      setToast(getAuthErrorMessage(error));
+    } finally {
+      setAuthSubmitting(false);
+    }
+  }
+
+  async function handleOAuth(provider) {
+    if (authSubmitting) return;
+    setAuthSubmitting(true);
+    try {
+      await auth.signInWithOAuth(provider);
+    } catch (error) {
+      setToast(getAuthErrorMessage(error));
+      setAuthSubmitting(false);
     }
   }
 
@@ -205,6 +262,10 @@ function App() {
           form={authForm}
           setForm={setAuthForm}
           onSubmit={handleAuth}
+          onMagicLink={handleMagicLink}
+          onOAuth={handleOAuth}
+          onAppleSoon={() => setToast("Apple login esta reservado para a proxima etapa de integracao.")}
+          submitting={authSubmitting}
         />
         {toast && <Toast text={toast} onClose={() => setToast("")} />}
       </>
@@ -212,7 +273,7 @@ function App() {
   }
 
   return (
-    <Shell query={query} setQuery={setQuery} session={auth.session} onLogout={logout} onCreateContact={() => setContactModalOpen(true)}>
+    <Shell query={query} setQuery={setQuery} session={auth.session} onLogout={logout} onCreateContact={() => setContactModalOpen(true)} theme={theme} onToggleTheme={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}>
       <OnboardingFlow profile={userProfile.profile} onUpdateProfile={userProfile.updateProfile} contacts={contacts} onImport={() => window.location.assign("#product-architecture")} />
       <Dashboard
         dashboard={dashboardSnapshot}
@@ -233,7 +294,7 @@ function App() {
       />
       <GovernancePanel onToast={setToast} />
       <CopilotChat contacts={contacts} selected={selected} onSelectContact={selectContact} onToast={setToast} />
-      <ProductArchitecturePanel onToast={setToast} />
+      <ProductArchitecturePanel onToast={setToast} session={auth.session} onRefresh={refreshData} />
       <ContactModal
         open={contactModalOpen}
         form={contactForm}
