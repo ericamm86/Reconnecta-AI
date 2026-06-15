@@ -1,5 +1,5 @@
-const STATIC_CACHE = "reconnect-ai-static-v2";
-const API_CACHE = "reconnect-ai-api-v2";
+const STATIC_CACHE = "reconnect-ai-static-v3";
+const API_CACHE = "reconnect-ai-api-v3";
 const APP_SHELL = ["/", "/index.html", "/favicon.svg", "/manifest.webmanifest", "/icons/maskable-icon.svg"];
 const API_NETWORK_FIRST = ["/api/contacts", "/api/dashboard"];
 
