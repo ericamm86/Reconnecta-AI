@@ -24,10 +24,6 @@ function validateSignIn({ email, password }) {
   if (!password) throw new Error("Informe sua senha.");
 }
 
-function validateEmailOnly(email) {
-  if (!isEmailValid(email || "")) throw new Error("Informe um e-mail valido.");
-}
-
 function getStoredLocalSession() {
   if (supabase) return null;
   const stored = window.localStorage.getItem(localSessionKey);
@@ -129,22 +125,6 @@ export function useAuth(onToast) {
     onToast?.("Cadastro iniciado. Confirme seu email para entrar.");
   }
 
-  async function signInWithMagicLink(email) {
-    validateEmailOnly(email);
-
-    if (!supabase) {
-      startLocalSession({ name: email.split("@")[0], email });
-      return;
-    }
-
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: redirectTo }
-    });
-    if (error) throw error;
-    onToast?.("Magic link enviado. Verifique seu email.");
-  }
-
   async function signInWithOAuth(provider) {
     if (!supabase) {
       onToast?.("Conectores sociais exigem Supabase configurado.");
@@ -178,7 +158,6 @@ export function useAuth(onToast) {
     loading,
     signInWithPassword,
     signUpWithPassword,
-    signInWithMagicLink,
     signInWithOAuth,
     signOut
   };

@@ -8,7 +8,7 @@ function isPasswordStrong(password) {
   return password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
 }
 
-export function AuthPanel({ mode, setMode, form, setForm, onSubmit, onMagicLink, onOAuth, onAppleSoon, submitting = false }) {
+export function AuthPanel({ mode, setMode, form, setForm, onSubmit, onOAuth, submitting = false }) {
   const isRegister = mode === "register";
   const emailHasError = form.email.length > 0 && !isEmailValid(form.email);
   const passwordHasError = form.password.length > 0 && isRegister && !isPasswordStrong(form.password);
@@ -139,24 +139,6 @@ export function AuthPanel({ mode, setMode, form, setForm, onSubmit, onMagicLink,
             >
               Continuar com Google
             </button>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => onMagicLink?.(form.email)}
-                disabled={submitting || emailHasError || !form.email}
-                className="h-10 rounded-lg border border-line bg-black/20 px-3 text-xs font-black uppercase tracking-[0.12em] text-slate-300 transition hover:border-mint/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
-              >
-                Magic link
-              </button>
-              <button
-                type="button"
-                onClick={onAppleSoon}
-                disabled={submitting}
-                className="h-10 rounded-lg border border-line bg-black/20 px-3 text-xs font-black uppercase tracking-[0.12em] text-slate-400 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Apple em breve
-              </button>
-            </div>
           </div>
 
           <button disabled={submitting} className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-mint px-5 text-sm font-black text-ink transition hover:bg-cyan disabled:cursor-not-allowed disabled:opacity-70">

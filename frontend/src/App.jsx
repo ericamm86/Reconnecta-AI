@@ -173,18 +173,6 @@ function App() {
     }
   }
 
-  async function handleMagicLink(email) {
-    if (authSubmitting) return;
-    setAuthSubmitting(true);
-    try {
-      await auth.signInWithMagicLink(email);
-    } catch (error) {
-      setToast(getAuthErrorMessage(error));
-    } finally {
-      setAuthSubmitting(false);
-    }
-  }
-
   async function handleOAuth(provider) {
     if (authSubmitting) return;
     setAuthSubmitting(true);
@@ -262,9 +250,7 @@ function App() {
           form={authForm}
           setForm={setAuthForm}
           onSubmit={handleAuth}
-          onMagicLink={handleMagicLink}
           onOAuth={handleOAuth}
-          onAppleSoon={() => setToast("Apple login esta reservado para a proxima etapa de integracao.")}
           submitting={authSubmitting}
         />
         {toast && <Toast text={toast} onClose={() => setToast("")} />}
