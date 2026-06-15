@@ -24,6 +24,14 @@ function validateSignIn({ email, password }) {
   if (!password) throw new Error("Informe sua senha.");
 }
 
+function validateEmailOnly(email) {
+  if (!isEmailValid(email || "")) throw new Error("Informe um e-mail valido.");
+}
+
+function validateNewPassword(password) {
+  if (!isPasswordStrong(password || "")) throw new Error("A senha deve ter no minimo 8 caracteres, com letras e numeros.");
+}
+
 function getStoredLocalSession() {
   if (supabase) return null;
   const stored = window.localStorage.getItem(localSessionKey);
@@ -37,9 +45,16 @@ function getStoredLocalSession() {
   }
 }
 
+function hasRecoveryMarker() {
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const searchParams = new URLSearchParams(window.location.search);
+  return hashParams.get("type") === "recovery" || searchParams.get("type") === "recovery";
+}
+
 export function useAuth(onToast) {
   const [session, setSession] = useState(getStoredLocalSession);
   const [loading, setLoading] = useState(Boolean(supabase));
+  const [passwordRecovery, setPasswordRecovery] = useState(hasRecoveryMarker);
 
   const bootstrap = useCallback(async () => {
     try {
@@ -58,8 +73,12 @@ export function useAuth(onToast) {
       if (data.session) bootstrap();
     });
 
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
+      if (event === "PASSWORD_RECOVERY") {
+        setPasswordRecovery(true);
+        return;
+      }
       if (session) bootstrap();
     });
 
@@ -147,18 +166,49 @@ export function useAuth(onToast) {
     if (error) throw error;
   }
 
+  async function requestPasswordReset(email) {
+    validateEmailOnly(email);
+
+    if (!supabase) {
+      onToast?.("Recuperacao de senha exige Supabase configurado.");
+      return;
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) throw error;
+    onToast?.("Enviamos um e-mail para redefinir sua senha.");
+  }
+
+  async function updatePassword(password) {
+    validateNewPassword(password);
+
+    if (!supabase) {
+      onToast?.("Recuperacao de senha exige Supabase configurado.");
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
+    setPasswordRecovery(false);
+    onToast?.("Senha atualizada. Acesso liberado.");
+  }
+
   async function signOut() {
     if (supabase) await supabase.auth.signOut();
     window.localStorage.removeItem(localSessionKey);
     setSession(null);
+    setPasswordRecovery(false);
   }
 
   return {
     session,
     loading,
+    passwordRecovery,
     signInWithPassword,
     signUpWithPassword,
     signInWithOAuth,
+    requestPasswordReset,
+    updatePassword,
     signOut
   };
 }

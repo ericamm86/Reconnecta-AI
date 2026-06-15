@@ -8,7 +8,7 @@ function isPasswordStrong(password) {
   return password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
 }
 
-export function AuthPanel({ mode, setMode, form, setForm, onSubmit, onOAuth, submitting = false }) {
+export function AuthPanel({ mode, setMode, form, setForm, onSubmit, onOAuth, onPasswordReset, submitting = false }) {
   const isRegister = mode === "register";
   const emailHasError = form.email.length > 0 && !isEmailValid(form.email);
   const passwordHasError = form.password.length > 0 && isRegister && !isPasswordStrong(form.password);
@@ -130,6 +130,19 @@ export function AuthPanel({ mode, setMode, form, setForm, onSubmit, onOAuth, sub
             )}
           </label>
 
+          {!isRegister && (
+            <div className="mt-3 flex justify-end">
+              <button
+                type="button"
+                onClick={() => onPasswordReset?.(form.email)}
+                disabled={submitting || emailHasError || !form.email}
+                className="text-sm font-bold text-cyan transition hover:text-mint disabled:cursor-not-allowed disabled:text-slate-500"
+              >
+                Esqueci minha senha
+              </button>
+            </div>
+          )}
+
           <div className="mt-5 grid gap-2">
             <button
               type="button"
@@ -143,6 +156,69 @@ export function AuthPanel({ mode, setMode, form, setForm, onSubmit, onOAuth, sub
 
           <button disabled={submitting} className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-mint px-5 text-sm font-black text-ink transition hover:bg-cyan disabled:cursor-not-allowed disabled:opacity-70">
             {submitting ? "Aguarde..." : isRegister ? "Cadastrar" : "Entrar"}
+            <ArrowRight size={18} />
+          </button>
+        </form>
+      </section>
+    </main>
+  );
+}
+
+export function PasswordRecoveryPanel({ form, setForm, onSubmit, submitting = false }) {
+  const passwordHasError = form.password.length > 0 && !isPasswordStrong(form.password);
+  const confirmationHasError = form.confirmPassword.length > 0 && form.confirmPassword !== form.password;
+
+  return (
+    <main className="min-h-screen bg-ink text-slate-100">
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(73,214,168,0.18),transparent_32%),radial-gradient(circle_at_82%_18%,rgba(97,215,244,0.12),transparent_34%),linear-gradient(145deg,#080b12,#101622_52%,#080b12)]" />
+      <section className="relative mx-auto grid min-h-screen max-w-xl items-center px-5 py-10">
+        <form onSubmit={onSubmit} className="rounded-xl border border-line bg-white/[0.06] p-6 shadow-2xl backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <div className="grid h-12 w-12 place-items-center rounded-lg bg-mint/15 text-mint">
+              <KeyRound />
+            </div>
+            <div>
+              <p className="text-sm uppercase tracking-[0.16em] text-slate-500">Recuperacao segura</p>
+              <h2 className="text-2xl font-black text-white">Criar nova senha</h2>
+            </div>
+          </div>
+
+          <label className="mt-6 block text-sm font-semibold text-slate-300">
+            Nova senha
+            <input
+              value={form.password}
+              onChange={(event) => setForm({ ...form, password: event.target.value })}
+              type="password"
+              className="mt-2 h-12 w-full rounded-lg border border-line bg-black/25 px-4 text-white outline-none focus:border-mint/50"
+              placeholder="********"
+              autoComplete="new-password"
+              minLength={8}
+              required
+              disabled={submitting}
+            />
+            <span className={`mt-2 block text-xs font-semibold ${passwordHasError ? "text-amber" : "text-slate-500"}`}>
+              Use no minimo 8 caracteres, com letras e numeros.
+            </span>
+          </label>
+
+          <label className="mt-5 block text-sm font-semibold text-slate-300">
+            Confirmar senha
+            <input
+              value={form.confirmPassword}
+              onChange={(event) => setForm({ ...form, confirmPassword: event.target.value })}
+              type="password"
+              className="mt-2 h-12 w-full rounded-lg border border-line bg-black/25 px-4 text-white outline-none focus:border-mint/50"
+              placeholder="********"
+              autoComplete="new-password"
+              minLength={8}
+              required
+              disabled={submitting}
+            />
+            {confirmationHasError && <span className="mt-2 block text-xs font-semibold text-amber">As senhas precisam ser iguais.</span>}
+          </label>
+
+          <button disabled={submitting || passwordHasError || confirmationHasError} className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-mint px-5 text-sm font-black text-ink transition hover:bg-cyan disabled:cursor-not-allowed disabled:opacity-70">
+            {submitting ? "Salvando..." : "Atualizar senha"}
             <ArrowRight size={18} />
           </button>
         </form>

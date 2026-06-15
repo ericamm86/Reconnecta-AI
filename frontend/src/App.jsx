@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AuthPanel } from "./components/AuthPanel";
+import { AuthPanel, PasswordRecoveryPanel } from "./components/AuthPanel";
 import { ContactModal } from "./components/ContactModal";
 import { ContactsWorkspace } from "./components/ContactsWorkspace";
 import { CopilotChat } from "./components/CopilotChat";
@@ -55,6 +55,7 @@ function getAuthErrorMessage(error) {
 function App() {
   const [authMode, setAuthMode] = useState("login");
   const [authForm, setAuthForm] = useState({ name: "", email: "", password: "" });
+  const [passwordRecoveryForm, setPasswordRecoveryForm] = useState({ password: "", confirmPassword: "" });
   const [query, setQuery] = useState("");
   const [dashboard, setDashboard] = useState(fallbackDashboard);
   const [contacts, setContacts] = useState(fallbackContacts);
@@ -184,6 +185,38 @@ function App() {
     }
   }
 
+  async function handlePasswordReset(email) {
+    if (authSubmitting) return;
+    setAuthSubmitting(true);
+    try {
+      await auth.requestPasswordReset(email);
+    } catch (error) {
+      setToast(getAuthErrorMessage(error));
+    } finally {
+      setAuthSubmitting(false);
+    }
+  }
+
+  async function handlePasswordRecovery(event) {
+    event.preventDefault();
+    if (authSubmitting) return;
+
+    if (passwordRecoveryForm.password !== passwordRecoveryForm.confirmPassword) {
+      setToast("As senhas precisam ser iguais.");
+      return;
+    }
+
+    setAuthSubmitting(true);
+    try {
+      await auth.updatePassword(passwordRecoveryForm.password);
+      setPasswordRecoveryForm({ password: "", confirmPassword: "" });
+    } catch (error) {
+      setToast(getAuthErrorMessage(error));
+    } finally {
+      setAuthSubmitting(false);
+    }
+  }
+
   function logout() {
     auth.signOut();
   }
@@ -251,6 +284,21 @@ function App() {
           setForm={setAuthForm}
           onSubmit={handleAuth}
           onOAuth={handleOAuth}
+          onPasswordReset={handlePasswordReset}
+          submitting={authSubmitting}
+        />
+        {toast && <Toast text={toast} onClose={() => setToast("")} />}
+      </>
+    );
+  }
+
+  if (auth.passwordRecovery) {
+    return (
+      <>
+        <PasswordRecoveryPanel
+          form={passwordRecoveryForm}
+          setForm={setPasswordRecoveryForm}
+          onSubmit={handlePasswordRecovery}
           submitting={authSubmitting}
         />
         {toast && <Toast text={toast} onClose={() => setToast("")} />}
