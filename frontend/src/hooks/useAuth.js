@@ -3,6 +3,7 @@ import { api } from "../lib/api";
 import { createLocalSession, supabase } from "../lib/supabase";
 
 const redirectTo = window.location.origin;
+const passwordRecoveryRedirectTo = `${window.location.origin}/reset-password`;
 const localSessionKey = "reconnect-local-session";
 
 function isEmailValid(email) {
@@ -48,7 +49,7 @@ function getStoredLocalSession() {
 function hasRecoveryMarker() {
   const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
   const searchParams = new URLSearchParams(window.location.search);
-  return hashParams.get("type") === "recovery" || searchParams.get("type") === "recovery";
+  return window.location.pathname === "/reset-password" || hashParams.get("type") === "recovery" || searchParams.get("type") === "recovery";
 }
 
 export function useAuth(onToast) {
@@ -174,7 +175,7 @@ export function useAuth(onToast) {
       return;
     }
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: passwordRecoveryRedirectTo });
     if (error) throw error;
     onToast?.("Enviamos um e-mail para redefinir sua senha.");
   }

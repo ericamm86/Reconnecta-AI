@@ -274,6 +274,20 @@ function App() {
     );
   }
 
+  if (auth.passwordRecovery) {
+    return (
+      <>
+        <PasswordRecoveryPanel
+          form={passwordRecoveryForm}
+          setForm={setPasswordRecoveryForm}
+          onSubmit={handlePasswordRecovery}
+          submitting={authSubmitting}
+        />
+        {toast && <Toast text={toast} onClose={() => setToast("")} />}
+      </>
+    );
+  }
+
   if (!auth.session) {
     return (
       <>
@@ -285,20 +299,6 @@ function App() {
           onSubmit={handleAuth}
           onOAuth={handleOAuth}
           onPasswordReset={handlePasswordReset}
-          submitting={authSubmitting}
-        />
-        {toast && <Toast text={toast} onClose={() => setToast("")} />}
-      </>
-    );
-  }
-
-  if (auth.passwordRecovery) {
-    return (
-      <>
-        <PasswordRecoveryPanel
-          form={passwordRecoveryForm}
-          setForm={setPasswordRecoveryForm}
-          onSubmit={handlePasswordRecovery}
           submitting={authSubmitting}
         />
         {toast && <Toast text={toast} onClose={() => setToast("")} />}
