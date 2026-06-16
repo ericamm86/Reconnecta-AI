@@ -328,7 +328,7 @@ function App() {
       />
       <GovernancePanel onToast={setToast} />
       <CopilotChat contacts={contacts} selected={selected} onSelectContact={selectContact} onToast={setToast} />
-      <ProductArchitecturePanel onToast={setToast} session={auth.session} onRefresh={refreshData} />
+      <ProductArchitecturePanel onToast={setToast} session={auth.session} googleProviderToken={auth.googleProviderToken} onConnectGoogle={() => handleOAuth("google")} onRefresh={refreshData} />
       <ContactModal
         open={contactModalOpen}
         form={contactForm}

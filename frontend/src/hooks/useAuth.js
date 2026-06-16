@@ -5,6 +5,7 @@ import { createLocalSession, supabase } from "../lib/supabase";
 const redirectTo = window.location.origin;
 const passwordRecoveryRedirectTo = `${window.location.origin}/reset-password`;
 const localSessionKey = "reconnect-local-session";
+const googleProviderTokenKey = "reconnect-google-provider-token";
 
 function isEmailValid(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -56,6 +57,7 @@ export function useAuth(onToast) {
   const [session, setSession] = useState(getStoredLocalSession);
   const [loading, setLoading] = useState(Boolean(supabase));
   const [passwordRecovery, setPasswordRecovery] = useState(hasRecoveryMarker);
+  const [googleProviderToken, setGoogleProviderToken] = useState(() => window.localStorage.getItem(googleProviderTokenKey) || "");
 
   const bootstrap = useCallback(async () => {
     try {
@@ -68,14 +70,22 @@ export function useAuth(onToast) {
   useEffect(() => {
     if (!supabase) return;
 
+    function syncSession(nextSession) {
+      setSession(nextSession);
+      if (nextSession?.provider_token) {
+        window.localStorage.setItem(googleProviderTokenKey, nextSession.provider_token);
+        setGoogleProviderToken(nextSession.provider_token);
+      }
+    }
+
     supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
+      syncSession(data.session);
       setLoading(false);
       if (data.session) bootstrap();
     });
 
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
+      syncSession(session);
       if (event === "PASSWORD_RECOVERY") {
         setPasswordRecovery(true);
         return;
@@ -197,7 +207,9 @@ export function useAuth(onToast) {
   async function signOut() {
     if (supabase) await supabase.auth.signOut();
     window.localStorage.removeItem(localSessionKey);
+    window.localStorage.removeItem(googleProviderTokenKey);
     setSession(null);
+    setGoogleProviderToken("");
     setPasswordRecovery(false);
   }
 
@@ -205,6 +217,7 @@ export function useAuth(onToast) {
     session,
     loading,
     passwordRecovery,
+    googleProviderToken,
     signInWithPassword,
     signUpWithPassword,
     signInWithOAuth,

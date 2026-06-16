@@ -29,7 +29,7 @@ const importSources = [
   ["LinkedIn Export", "Sincronizacao planejada para uma proxima versao", "Em breve"]
 ];
 
-export function ProductArchitecturePanel({ onToast, session, onRefresh }) {
+export function ProductArchitecturePanel({ onToast, session, googleProviderToken, onConnectGoogle, onRefresh }) {
   const [duplicates, setDuplicates] = useState([]);
   const [graph, setGraph] = useState(null);
   const [csvText, setCsvText] = useState("name,email,phones,tags\nAna Torres,ana@example.com,+55 85 98888-0000,\"startup,design\"");
@@ -84,9 +84,10 @@ export function ProductArchitecturePanel({ onToast, session, onRefresh }) {
   }
 
   async function importGoogleContacts() {
-    const accessToken = session?.provider_token;
+    const accessToken = session?.provider_token || googleProviderToken;
     if (!accessToken) {
-      onToast("Entre com Google para liberar a importacao real de Google Contacts.");
+      onToast("Conectando ao Google para liberar a importacao real de contatos.");
+      onConnectGoogle?.();
       return;
     }
 
@@ -161,7 +162,7 @@ export function ProductArchitecturePanel({ onToast, session, onRefresh }) {
                 </div>
                 {name === "Google Contacts" ? (
                   <button onClick={importGoogleContacts} className="rounded-md bg-mint px-2 py-1 text-xs font-black text-ink">
-                    Importar
+                    {session?.provider_token || googleProviderToken ? "Importar" : "Conectar"}
                   </button>
                 ) : (
                   <span title={status === "Em breve" ? "Funcionalidade fora do escopo do MVP, com interface reservada para evolucao." : ""} className={`rounded-md px-2 py-1 text-xs font-black ${status === "Em breve" ? "bg-white/8 text-slate-400" : "bg-mint/10 text-mint"}`}>
