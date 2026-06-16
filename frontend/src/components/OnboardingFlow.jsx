@@ -36,27 +36,36 @@ export function OnboardingFlow({ profile, onUpdateProfile, contacts, onImport })
         </div>
 
         <div className="mt-5 grid gap-4 lg:grid-cols-[0.7fr_0.3fr]">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-sm font-semibold text-slate-300">
-              Nome publico
-              <input
-                value={profile.displayName || ""}
-                onChange={(event) => onUpdateProfile({ ...profile, displayName: event.target.value, onboardingStep: "privacy" })}
-                className="mt-2 h-11 w-full rounded-lg border border-line bg-black/25 px-3 text-white outline-none focus:border-mint/50"
-              />
-            </label>
-            <label className="flex items-center justify-between gap-3 rounded-lg border border-line bg-black/20 px-4 py-3 text-sm font-bold text-slate-300">
-              <span className="inline-flex items-center gap-2">
-                <Globe2 size={17} className="text-mint" />
-                Perfil visivel na rede publica
-              </span>
-              <input
-                type="checkbox"
-                checked={profile.isPublic}
-                onChange={(event) => onUpdateProfile({ ...profile, isPublic: event.target.checked, onboardingStep: "ingestion" })}
-                className="h-5 w-5 accent-mint"
-              />
-            </label>
+          <div className="grid gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="text-sm font-semibold text-slate-300">
+                Nome publico
+                <input
+                  value={profile.displayName || ""}
+                  onChange={(event) => onUpdateProfile({ ...profile, displayName: event.target.value, onboardingStep: "privacy" })}
+                  className="mt-2 h-11 w-full rounded-lg border border-line bg-black/25 px-3 text-white outline-none focus:border-mint/50"
+                />
+              </label>
+              <label className="flex items-center justify-between gap-3 rounded-lg border border-line bg-black/20 px-4 py-3 text-sm font-bold text-slate-300">
+                <span className="inline-flex items-center gap-2">
+                  <Globe2 size={17} className="text-mint" />
+                  Perfil visivel na rede publica
+                </span>
+                <input
+                  type="checkbox"
+                  checked={profile.isPublic}
+                  onChange={(event) => onUpdateProfile({ ...profile, isPublic: event.target.checked, onboardingStep: "ingestion" })}
+                  className="h-5 w-5 accent-mint"
+                />
+              </label>
+            </div>
+
+            <div className="flex gap-3 rounded-lg border border-mint/25 bg-mint/10 px-4 py-3 text-sm font-semibold text-slate-200">
+              <ShieldCheck className="mt-0.5 shrink-0 text-mint" size={18} />
+              <p>
+                Seus contatos importados permanecem privados. Apenas seu perfil pode ser publicado quando voce ativar a rede publica.
+              </p>
+            </div>
           </div>
 
           <button onClick={onImport} className="h-11 rounded-lg bg-mint px-4 text-sm font-black text-ink hover:bg-cyan">
