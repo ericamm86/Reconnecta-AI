@@ -131,7 +131,7 @@ export function ProductArchitecturePanel({ onToast, session, onRefresh }) {
           </div>
           <div className="mt-5 grid gap-3 md:grid-cols-3">
             {screens.map(([title, description, Icon], index) => (
-              <article key={title} className="rounded-lg border border-line bg-black/15 p-4 transition hover:border-mint/40 hover:bg-white/[0.06]">
+              <article key={title} className="cursor-default select-none rounded-lg border border-line bg-black/15 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <Icon className="text-cyan" size={18} />
                   <span className="text-xs font-black text-slate-500">{String(index + 1).padStart(2, "0")}</span>
@@ -208,7 +208,7 @@ export function ProductArchitecturePanel({ onToast, session, onRefresh }) {
                   <div className="mt-3 flex flex-wrap gap-2">
                     <span className="rounded-md bg-cyan/10 px-2 py-1 text-xs font-bold text-cyan">{pair.reason}</span>
                     <button onClick={() => mergeDuplicate(pair)} className="rounded-md bg-mint px-2 py-1 text-xs font-black text-ink">Aprovar merge</button>
-                    <button className="rounded-md border border-line px-2 py-1 text-xs font-bold text-white">Revisar</button>
+                    <button onClick={() => onToast(`${pair.left.name} e ${pair.right.name} estao destacados para decisao manual.`)} className="rounded-md border border-line px-2 py-1 text-xs font-bold text-white">Revisar</button>
                     <button onClick={() => ignoreDuplicate(pair)} className="rounded-md border border-line px-2 py-1 text-xs font-bold text-slate-300">Ignorar</button>
                   </div>
                 </article>
@@ -245,7 +245,7 @@ export function ProductArchitecturePanel({ onToast, session, onRefresh }) {
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {["texto curto", "texto longo", "numero", "select", "checkbox", "multiselect", "data"].map((type) => (
-              <div key={type} className="rounded-lg border border-line bg-black/15 p-3 text-sm font-bold text-slate-300">
+              <div key={type} className="cursor-default select-none rounded-lg border border-line bg-black/15 p-3 text-sm font-bold text-slate-300">
                 {type}
               </div>
             ))}

@@ -24,7 +24,7 @@ export function OnboardingFlow({ profile, onUpdateProfile, contacts, onImport })
 
         <div className="mt-5 grid gap-3 md:grid-cols-5">
           {steps.map(([label, description, Icon], index) => (
-            <article key={label} className="rounded-lg border border-line bg-black/15 p-4">
+            <article key={label} className="cursor-default select-none rounded-lg border border-line bg-black/15 p-4">
               <div className="flex items-center justify-between">
                 <Icon className="text-cyan" size={19} />
                 <span className="text-xs font-black text-slate-500">{index + 1}</span>
