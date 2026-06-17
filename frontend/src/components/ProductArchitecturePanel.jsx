@@ -1,6 +1,8 @@
 import { CalendarDays, Columns3, FileUp, Filter, GitMerge, LayoutDashboard, MessageSquare, Network, Settings, ShieldCheck, Tags, UserRoundCog, UsersRound } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
+
+const pendingGoogleImportKey = "reconnect-pending-google-import";
 
 const screens = [
   ["Onboarding", "Perfil inicial e privacidade", UserRoundCog],
@@ -82,10 +84,11 @@ export function ProductArchitecturePanel({ onToast, session, googleProviderToken
     }
   }
 
-  async function importGoogleContacts() {
+  const importGoogleContacts = useCallback(async function importGoogleContacts() {
     const accessToken = session?.provider_token || googleProviderToken;
     if (!accessToken) {
-      onToast("Conectando ao Google para liberar a importacao real de contatos.");
+      window.localStorage.setItem(pendingGoogleImportKey, "true");
+      onToast("Conecte sua conta Google para importar os contatos.");
       onConnectGoogle?.();
       return;
     }
@@ -99,7 +102,16 @@ export function ProductArchitecturePanel({ onToast, session, googleProviderToken
     } catch (error) {
       onToast(error.message || "Falha ao importar Google Contacts.");
     }
-  }
+  }, [googleProviderToken, onConnectGoogle, onRefresh, onToast, session?.provider_token]);
+
+  useEffect(() => {
+    const accessToken = session?.provider_token || googleProviderToken;
+    if (!accessToken || window.localStorage.getItem(pendingGoogleImportKey) !== "true") return;
+
+    window.localStorage.removeItem(pendingGoogleImportKey);
+    const timer = window.setTimeout(() => importGoogleContacts(), 0);
+    return () => window.clearTimeout(timer);
+  }, [googleProviderToken, importGoogleContacts, session?.provider_token]);
 
   async function ignoreDuplicate(pair) {
     await api.ignoreDuplicate({ leftContactId: pair.left.id, rightContactId: pair.right.id, reason: "user_ignored" }).catch(() => null);
@@ -181,7 +193,7 @@ export function ProductArchitecturePanel({ onToast, session, googleProviderToken
                 </div>
                 {name === "Google Contacts" ? (
                   <button onClick={importGoogleContacts} className="rounded-md bg-mint px-2 py-1 text-xs font-black text-ink">
-                    {session?.provider_token || googleProviderToken ? "Importar" : "Conectar"}
+                    Importar
                   </button>
                 ) : (
                   <span title="Funcionalidade fora do escopo do MVP, com interface reservada para evolucao." className="cursor-default select-none rounded-md border border-line bg-transparent px-2 py-1 text-xs font-black text-slate-500">
