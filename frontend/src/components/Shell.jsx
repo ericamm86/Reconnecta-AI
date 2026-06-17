@@ -1,16 +1,64 @@
-import { Bell, BrainCircuit, Command, Moon, Network, Plus, Search, ShieldCheck, Sun } from "lucide-react";
+import { Bell, Moon, Network, Plus, Search, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
+import { mainNavItems, secondaryNavItems } from "../lib/navigation";
+
+function currentLocationHash() {
+  return window.location.hash || "#dashboard";
+}
+
+function isActiveHash(currentHash, href) {
+  if (currentHash === href) return true;
+  if (href === "#dashboard" && ["", "#command-center", "#network-graph", "#contacts-graph", "#connection-intelligence"].includes(currentHash)) return true;
+  if (href === "#contacts" && currentHash === "#contacts-workspace") return true;
+  if (href === "#copilot" && currentHash === "#copilot-chat") return true;
+  return false;
+}
+
+function useCurrentHash() {
+  const [currentHash, setCurrentHash] = useState(() => currentLocationHash());
+
+  useEffect(() => {
+    function handleHashChange() {
+      setCurrentHash(currentLocationHash());
+    }
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  return currentHash;
+}
+
+function BottomNavigation({ currentHash }) {
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-40 grid grid-cols-5 border-t border-line bg-ink/92 px-1 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 shadow-glow backdrop-blur-xl lg:hidden">
+      {mainNavItems.map(([label, href, Icon]) => {
+        const isActive = isActiveHash(currentHash, href);
+
+        return (
+          <a
+            key={label}
+            href={href}
+            aria-current={isActive ? "page" : undefined}
+            className="relative flex min-h-16 flex-col items-center justify-center rounded-lg px-1 pt-2 pb-3 text-[10px] font-bold tracking-wide transition-all duration-200 active:scale-95"
+            style={{ WebkitTapHighlightColor: "transparent" }}
+          >
+            <span className={`grid rounded-xl p-1 transition-all ${isActive ? "text-cyan drop-shadow-[0_0_8px_rgba(97,215,244,0.55)]" : "text-slate-500"}`}>
+              <Icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
+            </span>
+            <span className={`mt-0.5 max-w-full truncate transition-colors ${isActive ? "font-black text-slate-100" : "text-slate-500"}`}>
+              {label}
+            </span>
+            {isActive && <span className="absolute bottom-1 h-1 w-1 rounded-full bg-cyan shadow-[0_0_6px_#61d7f4]" />}
+          </a>
+        );
+      })}
+    </nav>
+  );
+}
 
 export function Shell({ children, query, setQuery, session, onLogout, onCreateContact, theme = "dark", onToggleTheme }) {
-  const navItems = [
-    ["Inicio", "#onboarding", Command],
-    ["Painel", "#command-center", Command],
-    ["Contatos", "#contacts-workspace", Network],
-    ["Grafo", "#network-graph", Network],
-    ["IA", "#connection-intelligence", BrainCircuit],
-    ["Chat", "#copilot-chat", BrainCircuit],
-    ["Acesso", "#trust-layer", ShieldCheck],
-    ["UX", "#product-architecture", Command]
-  ];
+  const currentHash = useCurrentHash();
 
   return (
     <div className="min-h-screen bg-ink pb-24 text-slate-100 lg:pb-0">
@@ -27,9 +75,27 @@ export function Shell({ children, query, setQuery, session, onLogout, onCreateCo
         </div>
 
         <nav className="mt-10 grid gap-2 text-sm font-semibold text-slate-300">
-          {navItems.map(([label, href, Icon]) => (
-            <a key={label} href={href} className="flex items-center gap-3 rounded-lg px-3 py-3 transition hover:bg-white/8 hover:text-white">
-              <Icon size={18} />
+          {mainNavItems.map(([label, href, Icon]) => {
+            const isActive = isActiveHash(currentHash, href);
+
+            return (
+              <a
+                key={label}
+                href={href}
+                aria-current={isActive ? "page" : undefined}
+                className={`flex items-center gap-3 rounded-lg px-3 py-3 transition hover:bg-white/8 hover:text-white ${isActive ? "bg-cyan/10 text-white ring-1 ring-cyan/20" : ""}`}
+              >
+                <Icon className={isActive ? "text-cyan" : ""} size={18} strokeWidth={isActive ? 2.5 : 2} />
+                {label}
+              </a>
+            );
+          })}
+        </nav>
+
+        <nav className="mt-8 grid gap-1 border-t border-line pt-5 text-sm font-semibold text-slate-400">
+          {secondaryNavItems.map(([label, href, Icon]) => (
+            <a key={label} href={href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition hover:bg-white/8 hover:text-white">
+              <Icon size={17} />
               {label}
             </a>
           ))}
@@ -80,14 +146,7 @@ export function Shell({ children, query, setQuery, session, onLogout, onCreateCo
         <Plus size={24} />
       </button>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-40 grid grid-cols-5 border-t border-line bg-ink/92 px-2 pb-[env(safe-area-inset-bottom)] pt-2 backdrop-blur-xl lg:hidden">
-        {navItems.slice(0, 5).map(([label, href, Icon]) => (
-          <a key={label} href={href} className="grid place-items-center gap-1 rounded-lg px-2 py-2 text-[11px] font-black text-slate-400 hover:bg-white/8 hover:text-white">
-            <Icon size={19} />
-            {label}
-          </a>
-        ))}
-      </nav>
+      <BottomNavigation currentHash={currentHash} />
     </div>
   );
 }

@@ -52,6 +52,7 @@ create table if not exists contacts (
   emails text[] not null default '{}',
   phones text[] not null default '{}',
   derived_ddd text,
+  derived_ddds text[] not null default '{}',
   company text,
   role text,
   area text,
@@ -75,6 +76,7 @@ alter table contacts add column if not exists description text;
 alter table contacts add column if not exists emails text[] not null default '{}';
 alter table contacts add column if not exists phones text[] not null default '{}';
 alter table contacts add column if not exists derived_ddd text;
+alter table contacts add column if not exists derived_ddds text[] not null default '{}';
 alter table contacts add column if not exists source_origin text not null default 'manual';
 alter table contacts add column if not exists social_links jsonb not null default '{}';
 alter table contacts add column if not exists current_demand text;
@@ -189,14 +191,23 @@ create table if not exists public_profiles (
   owner_id text not null unique,
   is_active boolean not null default false,
   display_name text not null,
+  avatar_url text,
   headline text,
   bio text,
   company text,
   location text,
   tags text[] not null default '{}',
+  problem_solved text,
+  current_demand text,
+  social_links jsonb not null default '{}',
   visibility text not null default 'network' check (visibility in ('hidden', 'network', 'public')),
   updated_at timestamptz not null default now()
 );
+
+alter table public_profiles add column if not exists avatar_url text;
+alter table public_profiles add column if not exists problem_solved text;
+alter table public_profiles add column if not exists current_demand text;
+alter table public_profiles add column if not exists social_links jsonb not null default '{}';
 
 create table if not exists shared_groups (
   id uuid primary key default uuid_generate_v4(),
@@ -245,6 +256,7 @@ create table if not exists group_contact_refs (
 
 create index if not exists contacts_owner_id_idx on contacts(owner_id);
 create index if not exists contacts_derived_ddd_idx on contacts(owner_id, derived_ddd);
+create index if not exists contacts_derived_ddds_gin_idx on contacts using gin(derived_ddds);
 create index if not exists contacts_emails_gin_idx on contacts using gin(emails);
 create index if not exists contacts_phones_gin_idx on contacts using gin(phones);
 create index if not exists contacts_record_scopes_gin_idx on contacts using gin(record_scopes);

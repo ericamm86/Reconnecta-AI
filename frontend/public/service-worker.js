@@ -1,7 +1,14 @@
-const STATIC_CACHE = "reconnect-ai-static-v4";
-const API_CACHE = "reconnect-ai-api-v4";
-const APP_SHELL = ["/", "/index.html", "/favicon.svg", "/manifest.webmanifest", "/icons/maskable-icon.svg"];
-const API_NETWORK_FIRST = ["/api/contacts", "/api/dashboard"];
+const STATIC_CACHE = "reconnect-ai-static-v6";
+const API_CACHE = "reconnect-ai-api-v6";
+const APP_SHELL = [
+  "/",
+  "/index.html",
+  "/favicon.svg",
+  "/manifest.webmanifest",
+  "/icons/icon-192x192.png",
+  "/icons/icon-512x512.png",
+  "/icons/icon-maskable-512x512.png"
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.addAll(APP_SHELL)));
@@ -17,16 +24,8 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-async function staleWhileRevalidate(request) {
-  const cache = await caches.open(STATIC_CACHE);
-  const cached = await cache.match(request);
-  const network = fetch(request)
-    .then((response) => {
-      if (response.ok) cache.put(request, response.clone());
-      return response;
-    })
-    .catch(() => cached);
-  return cached || network;
+function isApiRequest(url) {
+  return url.pathname.startsWith("/api/") || url.hostname.endsWith("supabase.co");
 }
 
 async function networkFirst(request) {
@@ -36,8 +35,29 @@ async function networkFirst(request) {
     if (response.ok) cache.put(request, response.clone());
     return response;
   } catch {
-    return (await cache.match(request)) || Response.json({ data: [] }, { status: 200 });
+    return (
+      (await cache.match(request)) ||
+      Response.json(
+        {
+          error: "Voce esta offline e este dado ainda nao foi pre-carregado.",
+          offline: true
+        },
+        { status: 200 }
+      )
+    );
   }
+}
+
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+
+  const response = await fetch(request);
+  if (response.ok) {
+    const cache = await caches.open(STATIC_CACHE);
+    cache.put(request, response.clone());
+  }
+  return response;
 }
 
 self.addEventListener("fetch", (event) => {
@@ -45,13 +65,13 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   const url = new URL(request.url);
 
-  if (API_NETWORK_FIRST.some((path) => url.pathname.startsWith(path))) {
+  if (isApiRequest(url)) {
     event.respondWith(networkFirst(request));
     return;
   }
 
-  if (url.origin === self.location.origin && (request.destination || url.pathname === "/")) {
-    event.respondWith(staleWhileRevalidate(request).then((response) => response || caches.match("/")));
+  if (url.origin === self.location.origin) {
+    event.respondWith(cacheFirst(request).catch(() => caches.match("/") || caches.match("/index.html")));
   }
 });
 
@@ -73,8 +93,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title, {
       body: payload.body,
-      icon: "/icons/maskable-icon.svg",
-      badge: "/icons/maskable-icon.svg",
+      icon: "/icons/icon-192x192.png",
+      badge: "/icons/icon-192x192.png",
       data: payload.data || {}
     })
   );

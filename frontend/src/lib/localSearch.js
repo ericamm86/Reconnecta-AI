@@ -39,6 +39,18 @@ function normalize(value = "") {
     .trim();
 }
 
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function wordRegex(token) {
+  return new RegExp(`\\b${escapeRegex(token)}\\b`, "i");
+}
+
+function contactValue(contact, camelKey, snakeKey = camelKey) {
+  return contact[camelKey] ?? contact[snakeKey];
+}
+
 function tokensFromPrompt(prompt) {
   const tokens = normalize(prompt)
     .split(" ")
@@ -60,17 +72,33 @@ function contactHaystack(contact) {
     [
       contact.name,
       contact.description,
-      contact.problemSolved,
-      contact.currentDemand,
+      contactValue(contact, "problemSolved", "problem_solved"),
+      contactValue(contact, "currentDemand", "current_demand"),
       contact.company,
       contact.role,
       contact.area,
       contact.tags?.join(" "),
-      contact.internalNotes
+      contactValue(contact, "internalNotes", "internal_notes")
     ]
       .filter(Boolean)
       .join(" ")
   );
+}
+
+function matchedFieldsForToken(contact, token) {
+  const fields = [
+    ["name", contact.name],
+    ["description", contact.description],
+    ["problem_solved", contactValue(contact, "problemSolved", "problem_solved")],
+    ["current_demand", contactValue(contact, "currentDemand", "current_demand")],
+    ["company", contact.company],
+    ["role", contact.role],
+    ["area", contact.area],
+    ["tags", contact.tags?.join(" ")],
+    ["internal_notes", contactValue(contact, "internalNotes", "internal_notes")]
+  ];
+  const regex = wordRegex(token);
+  return fields.filter(([, value]) => regex.test(normalize(value || ""))).map(([field]) => field);
 }
 
 function inferIntent(prompt) {
@@ -96,18 +124,54 @@ function parseTagIntent(prompt, contacts) {
 }
 
 export function searchContactsFromPrompt(prompt, contacts) {
-  const intent = inferIntent(prompt);
-  const tokens = tokensFromPrompt(prompt);
+  const cleanedPrompt = prompt.toLowerCase().trim();
+  const intent = inferIntent(cleanedPrompt);
+  const tokens = tokensFromPrompt(cleanedPrompt);
   const action = intent === "propose_tag_update" ? parseTagIntent(prompt, contacts) : null;
+
+  if (tokens.length === 0) {
+    return {
+      intent,
+      query: prompt,
+      tokens,
+      summary: "Prompt sem termos de busca validos.",
+      results: [],
+      action
+    };
+  }
 
   const results = contacts
     .map((contact) => {
       const haystack = contactHaystack(contact);
-      const matches = tokens.filter((token) => haystack.includes(token));
-      const tagBoost = contact.tags?.some((tag) => tokens.includes(normalize(tag))) ? 2 : 0;
-      const problemBoost = tokens.some((token) => normalize(contact.problemSolved || "").includes(token)) ? 2 : 0;
-      const score = matches.length + tagBoost + problemBoost;
-      return { contact, score, matchedTerms: matches };
+      let score = 0;
+      const matchedTerms = [];
+      const matchedFields = new Set();
+
+      tokens.forEach((token) => {
+        const regex = wordRegex(token);
+        if (!regex.test(haystack)) return;
+
+        score += 1;
+        matchedTerms.push(token);
+        matchedFieldsForToken(contact, token).forEach((field) => matchedFields.add(field));
+
+        const isTagMatch = contact.tags?.some((tag) => normalize(tag) === token);
+        if (isTagMatch) score += 2;
+
+        const problemSolved = normalize(contactValue(contact, "problemSolved", "problem_solved") || "");
+        if (regex.test(problemSolved)) score += 3;
+      });
+
+      return {
+        contact,
+        score,
+        matchedTerms,
+        metadata: {
+          source: "local_contacts",
+          matchedFields: [...matchedFields],
+          contactId: contact.id
+        }
+      };
     })
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score)
@@ -118,8 +182,8 @@ export function searchContactsFromPrompt(prompt, contacts) {
     query: prompt,
     tokens,
     summary: results.length
-      ? `Encontrei ${results.length} contato${results.length === 1 ? "" : "s"} com sinais relevantes na sua rede.`
-      : "Nao encontrei correspondencias diretas na base local.",
+      ? `Identifiquei ${results.length} ${results.length === 1 ? "conexao altamente qualificada" : "conexoes altamente qualificadas"} na sua constelacao para esta demanda.`
+      : "Nao encontrei correspondencias exatas para os criterios informados na base local.",
     results,
     action
   };

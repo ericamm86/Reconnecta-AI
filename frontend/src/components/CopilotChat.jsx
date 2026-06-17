@@ -1,5 +1,6 @@
 import { Bot, Check, MessageSquareText, Send, Sparkles, User, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { api } from "../lib/api";
 import { searchContactsFromPrompt } from "../lib/localSearch";
 
 const starterPrompts = [
@@ -60,36 +61,72 @@ function ActionApproval({ action, onApprove, onReject }) {
 
 export function CopilotChat({ contacts, selected, onSelectContact, onToast }) {
   const [input, setInput] = useState("");
+  const [isAiThinking, setIsAiThinking] = useState(false);
   const [messages, setMessages] = useState([
     {
       id: "welcome",
       role: "assistant",
-      text: "Pergunte sobre quem resolve um problema, presta um servico ou deve receber uma tag. Eu busco na sua base local primeiro."
+      content: "Pergunte sobre quem resolve um problema, presta um servico ou deve receber uma tag. Eu busco na sua base local primeiro."
     }
   ]);
 
   const contextLabel = useMemo(() => selected?.name || "rede inteira", [selected]);
 
-  function submitPrompt(prompt = input) {
+  async function submitPrompt(prompt = input) {
     const value = prompt.trim();
-    if (!value) return;
+    if (!value || isAiThinking) return;
 
     const parsed = searchContactsFromPrompt(value, contacts);
+    const assistantMessageId = crypto.randomUUID();
     setMessages((current) => [
       ...current,
-      { id: crypto.randomUUID(), role: "user", text: value },
-      {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        text: parsed.summary,
-        generativeUi: {
-          type: "contact_results",
-          results: parsed.results,
-          action: parsed.action
-        }
-      }
+      { id: crypto.randomUUID(), role: "user", content: value }
     ]);
     setInput("");
+    setIsAiThinking(true);
+
+    try {
+      const { data } = await api.generateStreamingChatResponse({
+        prompt: value,
+        contextContacts: parsed.results.map((result) => result.contact),
+        intent: parsed.intent
+      });
+
+      setMessages((current) => [
+        ...current,
+        {
+          id: assistantMessageId,
+          role: "assistant",
+          content: data.text || parsed.summary,
+          provider: data.provider,
+          generativeUi: parsed.results.length || parsed.action
+            ? {
+                type: "contact_results",
+                results: parsed.results,
+                action: parsed.action
+              }
+            : null
+        }
+      ]);
+    } catch (error) {
+      console.error("Falha na resposta do Copilot LLM:", error);
+      setMessages((current) => [
+        ...current,
+        {
+          id: assistantMessageId,
+          role: "assistant",
+          content: parsed.summary,
+          provider: "local_fallback",
+          generativeUi: {
+            type: "contact_results",
+            results: parsed.results,
+            action: parsed.action
+          }
+        }
+      ]);
+    } finally {
+      setIsAiThinking(false);
+    }
   }
 
   function approveAction(action) {
@@ -99,13 +136,14 @@ export function CopilotChat({ contacts, selected, onSelectContact, onToast }) {
       {
         id: crypto.randomUUID(),
         role: "assistant",
-        text: "Acao aprovada na camada de UI. No proximo passo, este evento dispara a funcao segura de escrita."
+        content: "Acao aprovada na camada de UI. No proximo passo, este evento dispara a funcao segura de escrita."
       }
     ]);
   }
 
   return (
     <aside id="copilot-chat" className="mx-auto max-w-7xl px-4 pb-10 sm:px-6">
+      <span id="copilot" className="sr-only" />
       <section className="rounded-xl border border-line bg-white/[0.04] p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -133,7 +171,12 @@ export function CopilotChat({ contacts, selected, onSelectContact, onToast }) {
                     </div>
                   )}
                   <div className={`max-w-[86%] rounded-lg border p-3 ${message.role === "user" ? "border-mint/30 bg-mint/10" : "border-line bg-white/[0.04]"}`}>
-                    <p className="text-sm leading-6 text-slate-100">{message.text}</p>
+                    <p className="text-sm leading-6 text-slate-100">{message.content || message.text}</p>
+                    {message.provider && (
+                      <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+                        {message.provider === "openai" ? "Resposta com IA" : "Fallback local"}
+                      </p>
+                    )}
                     {message.generativeUi?.results?.length > 0 && (
                       <div className="mt-3 grid gap-2">
                         {message.generativeUi.results.map((item) => (
@@ -154,6 +197,16 @@ export function CopilotChat({ contacts, selected, onSelectContact, onToast }) {
                   )}
                 </article>
               ))}
+              {isAiThinking && (
+                <article className="flex justify-start gap-3">
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-cyan/15 text-cyan">
+                    <Sparkles size={17} />
+                  </div>
+                  <div className="rounded-lg border border-line bg-white/[0.04] p-3 text-sm font-semibold text-slate-300">
+                    Analisando contexto local e sintetizando resposta...
+                  </div>
+                </article>
+              )}
             </div>
 
             <form
@@ -166,11 +219,12 @@ export function CopilotChat({ contacts, selected, onSelectContact, onToast }) {
               <div className="flex gap-2">
                 <input
                   value={input}
+                  disabled={isAiThinking}
                   onChange={(event) => setInput(event.target.value)}
                   className="h-11 flex-1 rounded-lg border border-line bg-black/25 px-3 text-sm text-white outline-none focus:border-cyan/50"
                   placeholder="Quem resolve problemas de infraestrutura?"
                 />
-                <button className="grid h-11 w-11 place-items-center rounded-lg bg-cyan text-ink hover:bg-mint" aria-label="Enviar">
+                <button disabled={isAiThinking} className="grid h-11 w-11 place-items-center rounded-lg bg-cyan text-ink hover:bg-mint disabled:cursor-not-allowed disabled:opacity-60" aria-label="Enviar">
                   <Send size={18} />
                 </button>
               </div>
@@ -184,7 +238,7 @@ export function CopilotChat({ contacts, selected, onSelectContact, onToast }) {
             </div>
             <div className="mt-4 grid gap-2">
               {starterPrompts.map((prompt) => (
-                <button key={prompt} onClick={() => submitPrompt(prompt)} className="rounded-lg border border-line bg-white/[0.04] p-3 text-left text-sm font-semibold text-slate-300 hover:border-cyan/40 hover:text-white">
+                <button key={prompt} disabled={isAiThinking} onClick={() => submitPrompt(prompt)} className="rounded-lg border border-line bg-white/[0.04] p-3 text-left text-sm font-semibold text-slate-300 hover:border-cyan/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-60">
                   {prompt}
                 </button>
               ))}

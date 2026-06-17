@@ -9,7 +9,7 @@ export const dashboardRouter = express.Router();
 dashboardRouter.get(
   "/",
   asyncHandler(async (req, res) => {
-    const contacts = await listContacts(req.user.id, {});
+    const contacts = await listContacts(req.user, {});
     const interactions = await listInteractions();
     const active = contacts.filter((contact) => contact.proximity >= 70).length;
     const averageScore = contacts.length

@@ -38,3 +38,24 @@ export async function query(text, params = []) {
   await ensureSchema();
   return pool.query(text, params);
 }
+
+export async function withTransaction(callback) {
+  if (!pool) {
+    throw new Error("DATABASE_URL is not configured.");
+  }
+
+  await ensureSchema();
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+    const result = await callback(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => null);
+    throw error;
+  } finally {
+    client.release();
+  }
+}

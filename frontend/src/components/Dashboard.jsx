@@ -21,6 +21,7 @@ export function Dashboard({ dashboard, contacts, selected, setSelected, intellig
 
   return (
     <section id="command-center" className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+      <span id="dashboard" className="sr-only" />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {stats.map(([label, value, Icon]) => (
           <article key={label} className="rounded-lg border border-line bg-white/[0.04] p-5 shadow-glow">
@@ -35,6 +36,7 @@ export function Dashboard({ dashboard, contacts, selected, setSelected, intellig
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <section id="network-graph" className="rounded-xl border border-line bg-white/[0.04] p-5">
+          <span id="contacts-graph" className="sr-only" />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm uppercase tracking-[0.16em] text-mint">Grafo da rede</p>

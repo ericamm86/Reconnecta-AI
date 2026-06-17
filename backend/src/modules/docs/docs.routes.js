@@ -17,7 +17,7 @@ docsRouter.get(
 apiV1Router.get(
   "/contacts",
   asyncHandler(async (req, res) => {
-    const data = await listContacts(req.user.id, req.query);
+    const data = await listContacts(req.user, req.query);
     res.json({ data });
   })
 );
@@ -34,7 +34,7 @@ apiV1Router.post(
 apiV1Router.get(
   "/graphs/internal",
   asyncHandler(async (req, res) => {
-    const data = await buildInternalGraph(req.user.id);
+    const data = await buildInternalGraph(req.user);
     res.json({ data });
   })
 );

@@ -28,13 +28,13 @@ for (const contact of contacts) {
 
   const result = await query(
     `insert into contacts (
-       owner_id, name, avatar_url, description, email, emails, phones, derived_ddd,
+       owner_id, name, avatar_url, description, email, emails, phones, derived_ddd, derived_ddds,
        company, role, area, proximity, tags, source_origin, social_links,
        current_demand, problem_solved, internal_notes, record_scopes, linked_user_id,
        custom_values, last_interaction_at, created_at, updated_at
      )
      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-             $16, $17, $18, $19, $20, $21, $22, $23, $24)
+             $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
      returning id`,
     [
       contact.ownerId,
@@ -45,6 +45,7 @@ for (const contact of contacts) {
       contact.emails,
       contact.phones,
       contact.derivedDdd,
+      contact.derivedDdds || (contact.derivedDdd ? [contact.derivedDdd] : []),
       contact.company || null,
       contact.role || null,
       contact.area || null,
@@ -90,27 +91,38 @@ for (const interaction of interactions) {
 
 for (const profile of publicProfiles) {
   await query(
-    `insert into public_profiles (owner_id, is_active, display_name, headline, bio, company, location, tags, visibility, updated_at)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `insert into public_profiles (
+       owner_id, is_active, display_name, avatar_url, headline, bio, company, location,
+       tags, problem_solved, current_demand, social_links, visibility, updated_at
+     )
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
      on conflict (owner_id) do update set
        is_active = excluded.is_active,
        display_name = excluded.display_name,
+       avatar_url = excluded.avatar_url,
        headline = excluded.headline,
        bio = excluded.bio,
        company = excluded.company,
        location = excluded.location,
        tags = excluded.tags,
+       problem_solved = excluded.problem_solved,
+       current_demand = excluded.current_demand,
+       social_links = excluded.social_links,
        visibility = excluded.visibility,
        updated_at = excluded.updated_at`,
     [
       profile.ownerId,
       profile.isActive,
       profile.displayName,
+      profile.avatarUrl || null,
       profile.headline,
       profile.bio,
       profile.company,
       profile.location,
       profile.tags,
+      profile.problemSolved || null,
+      profile.currentDemand || null,
+      JSON.stringify(profile.socialLinks || {}),
       profile.visibility,
       profile.updatedAt
     ]

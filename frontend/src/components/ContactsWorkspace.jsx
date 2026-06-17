@@ -12,28 +12,89 @@ function normalize(value = "") {
 
 function initials(name = "") {
   return name
+    .trim()
     .split(" ")
+    .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0])
     .join("")
-    .toUpperCase();
+    .toUpperCase() || "??";
+}
+
+function contactField(contact, camelKey, snakeKey = camelKey) {
+  return contact?.[camelKey] ?? contact?.[snakeKey];
 }
 
 function SocialLink({ href, type }) {
   if (!href) return null;
-  const Icon = type === "whatsapp" ? MessageCircle : type === "custom" ? ExternalLink : Link2;
+
+  const config = {
+    whatsapp: {
+      Icon: MessageCircle,
+      label: "Abrir conversa no WhatsApp",
+      hoverClass: "hover:border-green-500/40 hover:text-green-400"
+    },
+    linkedin: {
+      Icon: Link2,
+      label: "Acessar perfil do LinkedIn",
+      hoverClass: "hover:border-blue-500/40 hover:text-blue-400"
+    },
+    instagram: {
+      Icon: Link2,
+      label: "Acessar perfil do Instagram",
+      hoverClass: "hover:border-pink-500/40 hover:text-pink-400"
+    },
+    custom: {
+      Icon: ExternalLink,
+      label: "Visitar link personalizado",
+      hoverClass: "hover:border-cyan/40 hover:text-cyan"
+    }
+  };
+  const { Icon, label, hoverClass } = config[type] || {
+    Icon: Link2,
+    label: "Acessar link externo",
+    hoverClass: "hover:border-slate-400 hover:text-slate-100"
+  };
+
   return (
-    <a href={href} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-lg border border-line bg-white/[0.04] text-slate-300 hover:border-mint/40 hover:text-white">
-      <Icon size={16} />
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={label}
+      title={label}
+      className={`grid h-9 w-9 place-items-center rounded-lg border border-line bg-white/[0.04] text-slate-300 backdrop-blur-sm transition-all active:scale-90 ${hoverClass}`}
+      style={{ WebkitTapHighlightColor: "transparent" }}
+    >
+      <Icon size={16} strokeWidth={2} />
     </a>
   );
 }
 
 function DynamicValue({ field, value }) {
   if (field.type === "checkbox") {
-    return <span className={`rounded-md px-2 py-1 text-xs font-black ${value ? "bg-mint/10 text-mint" : "bg-white/8 text-slate-400"}`}>{value ? "Sim" : "Nao"}</span>;
+    const isTrue = value === true || value === "true";
+    return (
+      <span className={`inline-flex items-center rounded-lg border px-2.5 py-0.5 text-xs font-bold transition-colors ${isTrue ? "border-mint/20 bg-mint/10 text-mint" : "border-line bg-white/[0.02] text-slate-500"}`}>
+        {isTrue ? "Sim" : "Nao"}
+      </span>
+    );
   }
-  return <span className="text-sm font-semibold text-slate-200">{value || "Nao preenchido"}</span>;
+
+  if (value === undefined || value === null || value === "") {
+    return <span className="text-xs italic text-slate-500">Nao preenchido</span>;
+  }
+
+  if (typeof value === "string" && (value.startsWith("http://") || value.startsWith("https://"))) {
+    return (
+      <a href={value} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-semibold text-cyan transition-all hover:underline">
+        <span>Acessar link</span>
+        <ExternalLink size={14} />
+      </a>
+    );
+  }
+
+  return <span className="break-words text-sm font-medium text-slate-200">{String(value)}</span>;
 }
 
 export function ContactsWorkspace({ contacts, selected, onSelect, onCreateContact }) {
@@ -48,7 +109,7 @@ export function ContactsWorkspace({ contacts, selected, onSelect, onCreateContac
   const [fieldForm, setFieldForm] = useState({ key: "", label: "", type: "short_text" });
 
   const tags = useMemo(() => [...new Set(contacts.flatMap((contact) => contact.tags || []))], [contacts]);
-  const ddds = useMemo(() => [...new Set(contacts.map((contact) => contact.derivedDdd).filter(Boolean))], [contacts]);
+  const ddds = useMemo(() => [...new Set(contacts.flatMap((contact) => contact.derivedDdds?.length ? contact.derivedDdds : [contact.derivedDdd]).filter(Boolean))], [contacts]);
   const sources = useMemo(() => [...new Set(contacts.map((contact) => contact.sourceOrigin).filter(Boolean))], [contacts]);
   const mergeCount = contacts.filter((contact) => contact.hasMergeSuggestion).length;
 
@@ -60,7 +121,7 @@ export function ContactsWorkspace({ contacts, selected, onSelect, onCreateContac
         return (
           (!value || haystack.includes(value)) &&
           (!tagFilter || contact.tags?.includes(tagFilter)) &&
-          (!dddFilter || contact.derivedDdd === dddFilter) &&
+          (!dddFilter || contact.derivedDdd === dddFilter || contact.derivedDdds?.includes(dddFilter)) &&
           (!sourceFilter || contact.sourceOrigin === sourceFilter) &&
           (!scopeFilter || contact.recordScopes?.includes(scopeFilter))
         );
@@ -88,6 +149,7 @@ export function ContactsWorkspace({ contacts, selected, onSelect, onCreateContac
 
   return (
     <section id="contacts-workspace" className="mx-auto max-w-7xl px-4 pb-10 sm:px-6">
+      <span id="contacts" className="sr-only" />
       <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <section className="rounded-xl border border-line bg-white/[0.04] p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -177,16 +239,24 @@ export function ContactsWorkspace({ contacts, selected, onSelect, onCreateContac
           </div>
         </section>
 
-        <section className="rounded-xl border border-line bg-white/[0.04] p-5">
+        <section className="overflow-hidden rounded-xl border border-line bg-white/[0.04] p-5 backdrop-blur-md">
           {selected ? (
             <>
-              <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-5">
                 <div className="flex items-center gap-4">
-                  <div className="grid h-16 w-16 place-items-center rounded-xl bg-gradient-to-br from-mint to-cyan text-xl font-black text-ink">{initials(selected.name)}</div>
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.16em] text-cyan">Visao 360</p>
-                    <h2 className="text-2xl font-black text-white">{selected.name}</h2>
-                    <p className="text-sm text-slate-400">{selected.role} - {selected.company}</p>
+                  <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-cyan to-mint text-xl font-black text-ink shadow-glow">
+                    {selected.avatarUrl || selected.avatar_url ? (
+                      <img src={selected.avatarUrl || selected.avatar_url} alt={selected.name} className="h-full w-full object-cover" />
+                    ) : (
+                      initials(selected.name)
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan">Visao 360</p>
+                    <h2 className="mt-0.5 truncate text-2xl font-black text-white">{selected.name}</h2>
+                    <p className="mt-0.5 truncate text-sm text-slate-400">
+                      {selected.role || "Sem cargo"} {selected.company ? `em ${selected.company}` : ""}
+                    </p>
                   </div>
                 </div>
                 <button onClick={onCreateContact} className="h-10 rounded-lg bg-mint px-3 text-sm font-black text-ink hover:bg-cyan">Novo contato</button>
@@ -200,19 +270,21 @@ export function ContactsWorkspace({ contacts, selected, onSelect, onCreateContac
 
               <div className="mt-5 grid gap-4 md:grid-cols-3">
                 {[
-                  ["O que demanda", selected.currentDemand],
-                  ["Problemas que resolve", selected.problemSolved],
-                  ["Notas internas", selected.internalNotes]
+                  ["O que demanda", contactField(selected, "currentDemand", "current_demand")],
+                  ["Problemas que resolve", contactField(selected, "problemSolved", "problem_solved")],
+                  ["Notas internas", contactField(selected, "internalNotes", "internal_notes")]
                 ].map(([label, value]) => (
-                  <article key={label} className="rounded-lg border border-line bg-black/15 p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">{label}</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-200">{value || "Nao preenchido"}</p>
+                  <article key={label} className="rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-transparent p-4 backdrop-blur-md">
+                    <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">{label}</p>
+                    <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-slate-300">
+                      {value || <span className="text-xs italic text-slate-500">Nao preenchido</span>}
+                    </p>
                   </article>
                 ))}
               </div>
 
               <div className="mt-4 grid gap-4 md:grid-cols-2">
-                <article className="rounded-lg border border-line bg-black/15 p-4">
+                <article className="rounded-xl border border-line bg-black/15 p-4">
                   <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Campos dinamicos</p>
                   <div className="mt-3 grid gap-3">
                     {customFields.map((field) => (
@@ -248,24 +320,29 @@ export function ContactsWorkspace({ contacts, selected, onSelect, onCreateContac
                     </div>
                   </form>
                 </article>
-                <article className="rounded-lg border border-line bg-black/15 p-4">
+                <article className="rounded-xl border border-line bg-black/15 p-4">
                   <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Ecossistema e links</p>
                   <div className="mt-3 grid gap-2 text-sm text-slate-300">
                     <p>DDD: <strong className="text-white">{selected.derivedDdd || "N/A"}</strong></p>
                     <p>Fonte: <strong className="text-white">{selected.sourceOrigin || "manual"}</strong></p>
                     <p>Emails: <strong className="text-white">{selected.emails?.join(", ") || selected.email}</strong></p>
                   </div>
+                  <h4 className="mb-3 mt-5 text-xs font-black uppercase tracking-[0.15em] text-slate-500">Canais de conexao</h4>
                   <div className="mt-4 flex gap-2">
-                    <SocialLink href={selected.socialLinks?.linkedin} type="linkedin" />
-                    <SocialLink href={selected.socialLinks?.instagram} type="instagram" />
-                    <SocialLink href={selected.socialLinks?.whatsapp} type="whatsapp" />
-                    <SocialLink href={selected.socialLinks?.custom} type="custom" />
+                    <SocialLink href={(selected.socialLinks || selected.social_links)?.linkedin} type="linkedin" />
+                    <SocialLink href={(selected.socialLinks || selected.social_links)?.instagram} type="instagram" />
+                    <SocialLink href={(selected.socialLinks || selected.social_links)?.whatsapp} type="whatsapp" />
+                    <SocialLink href={(selected.socialLinks || selected.social_links)?.custom} type="custom" />
                   </div>
                 </article>
               </div>
             </>
           ) : (
-            <div className="rounded-lg border border-dashed border-line p-8 text-center text-slate-400">Selecione um contato para abrir a visao 360.</div>
+            <div className="flex min-h-[300px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 p-8 text-center text-slate-500">
+              <p className="max-w-xs text-sm leading-5">
+                Selecione uma conexao no painel ou no grafo para expandir a inteligencia e a visao de networking 360.
+              </p>
+            </div>
           )}
         </section>
       </div>

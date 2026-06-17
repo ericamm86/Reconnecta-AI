@@ -1,4 +1,4 @@
-import { CalendarDays, Columns3, FileUp, Filter, GitMerge, LayoutDashboard, MessageSquare, Network, Settings, ShieldCheck, Tags, UserRoundCog, UsersRound } from "lucide-react";
+import { AlertTriangle, CalendarDays, Check, Columns3, FileUp, Filter, GitMerge, LayoutDashboard, MessageSquare, Network, Settings, ShieldCheck, Tags, UserRoundCog, UsersRound, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 
@@ -34,6 +34,9 @@ export function ProductArchitecturePanel({ onToast, session, googleProviderToken
   const [graph, setGraph] = useState(null);
   const [csvText, setCsvText] = useState("name,email,phones,tags\nAna Torres,ana@example.com,+55 85 98888-0000,\"startup,design\"");
   const [csvOpen, setCsvOpen] = useState(false);
+  const [isCsvImporting, setIsCsvImporting] = useState(false);
+  const [csvErrorMessage, setCsvErrorMessage] = useState("");
+  const [processingDuplicateId, setProcessingDuplicateId] = useState(null);
 
   useEffect(() => {
     Promise.all([api.duplicates(), api.internalGraph()])
@@ -58,29 +61,76 @@ export function ProductArchitecturePanel({ onToast, session, googleProviderToken
     return parts.map((part) => part.replace(/^"|"$/g, "").trim());
   }
 
+  function sanitizeCsvPhone(value) {
+    const digits = String(value || "").replace(/\D/g, "");
+    if (!digits) return "";
+    return digits.startsWith("55") ? `+${digits}` : digits;
+  }
+
+  function csvValue(row, ...keys) {
+    return keys.map((key) => row[key]).find((value) => value !== undefined && value !== null && String(value).trim() !== "") || "";
+  }
+
   async function importCsv(event) {
     event.preventDefault();
-    const [headerLine, ...lines] = csvText.trim().split(/\r?\n/);
-    const headers = parseCsvLine(headerLine);
-    const rows = lines.filter(Boolean).map((line) => {
-      const values = parseCsvLine(line);
-      const row = Object.fromEntries(headers.map((header, index) => [header, values[index] || ""]));
-      return {
-        name: row.name,
-        email: row.email,
-        emails: row.email ? [row.email] : [],
-        phones: row.phones ? row.phones.split("|").map((phone) => phone.trim()) : [],
-        tags: row.tags ? row.tags.split(",").map((tag) => tag.trim()).filter(Boolean) : [],
-        sourceOrigin: "csv"
-      };
-    });
+
+    if (!csvText.trim()) {
+      setCsvErrorMessage("O arquivo CSV parece estar vazio.");
+      return;
+    }
+
+    setIsCsvImporting(true);
+    setCsvErrorMessage("");
 
     try {
+      const [headerLine, ...lines] = csvText.trim().split(/\r?\n/);
+      const headers = parseCsvLine(headerLine).map((header) => header.trim());
+      const rows = lines
+        .filter(Boolean)
+        .map((line) => {
+          const values = parseCsvLine(line);
+          const row = Object.fromEntries(headers.map((header, index) => [header, values[index] || ""]));
+          const email = String(csvValue(row, "email")).trim().toLowerCase();
+          const phones = [
+            ...new Set(String(csvValue(row, "phones", "phone", "telefone"))
+              .split("|")
+              .map((phone) => sanitizeCsvPhone(phone))
+              .filter(Boolean))
+          ];
+          const tags = [
+            ...new Set([
+              ...String(csvValue(row, "tags", "tag"))
+                .split(",")
+                .map((tag) => tag.trim().toLowerCase())
+                .filter(Boolean),
+              "csv_import"
+            ])
+          ];
+
+          return {
+            name: String(csvValue(row, "name", "nome")).trim(),
+            email,
+            emails: email ? [email] : [],
+            phones,
+            company: String(csvValue(row, "company", "empresa")).trim(),
+            role: String(csvValue(row, "role", "cargo")).trim(),
+            tags,
+            sourceOrigin: "csv",
+            problemSolved: String(csvValue(row, "problem_solved", "problemSolved", "problema_resolvido")).trim(),
+            currentDemand: String(csvValue(row, "current_demand", "currentDemand", "demanda_atual")).trim(),
+            internalNotes: String(csvValue(row, "internal_notes", "internalNotes", "notes", "notas")).trim() || "Importado via arquivo CSV."
+          };
+        })
+        .filter((contact) => contact.name);
+
       const { data } = await api.importContacts({ source: "csv", rows });
       setDuplicates(data.duplicateCandidates || []);
       onToast(`${data.job.importedRows} contato${data.job.importedRows === 1 ? "" : "s"} importado${data.job.importedRows === 1 ? "" : "s"}.`);
     } catch (error) {
-      onToast(error.message);
+      setCsvErrorMessage("Falha ao ler o arquivo CSV. Verifique a codificacao e as colunas.");
+      onToast(error.message || "Falha ao importar CSV.");
+    } finally {
+      setIsCsvImporting(false);
     }
   }
 
@@ -113,25 +163,57 @@ export function ProductArchitecturePanel({ onToast, session, googleProviderToken
     return () => window.clearTimeout(timer);
   }, [googleProviderToken, importGoogleContacts, session?.provider_token]);
 
+  function duplicateReasonLabel(reason) {
+    if (reason === "email_exact_match") return "E-mail identico encontrado";
+    if (reason === "phone_exact_match") return "Mesmo numero de telefone";
+    return "Possivel duplicidade";
+  }
+
+  function contactInitials(contact) {
+    return (contact?.name || "?")
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase();
+  }
+
+  async function handleDuplicateAction(pair, action) {
+    if (processingDuplicateId) return;
+    setProcessingDuplicateId(pair.id);
+    try {
+      await action();
+    } finally {
+      setProcessingDuplicateId(null);
+    }
+  }
+
   async function ignoreDuplicate(pair) {
-    await api.ignoreDuplicate({ leftContactId: pair.left.id, rightContactId: pair.right.id, reason: "user_ignored" }).catch(() => null);
-    setDuplicates((current) => current.filter((item) => item.id !== pair.id));
-    onToast("Par marcado como nao duplicado.");
+    await handleDuplicateAction(pair, async () => {
+      await api.ignoreDuplicate({ leftContactId: pair.left.id, rightContactId: pair.right.id, reason: "user_ignored" }).catch(() => null);
+      setDuplicates((current) => current.filter((item) => item.id !== pair.id));
+      onToast("Par marcado como nao duplicado.");
+    });
   }
 
   async function mergeDuplicate(pair) {
-    try {
-      const { data } = await api.mergeDuplicate({ leftContactId: pair.left.id, rightContactId: pair.right.id, reason: pair.reason });
-      setDuplicates((current) => current.filter((item) => item.id !== pair.id));
-      onToast(`${data.mergedContact.name} consolidado com sucesso.`);
-      onRefresh?.(data.mergedContact.id);
-    } catch (error) {
-      onToast(error.message || "Nao foi possivel aprovar o merge.");
-    }
+    await handleDuplicateAction(pair, async () => {
+      try {
+        const { data } = await api.mergeDuplicate({ leftContactId: pair.left.id, rightContactId: pair.right.id, reason: pair.reason });
+        setDuplicates((current) => current.filter((item) => item.id !== pair.id));
+        onToast(`${data.mergedContact.name} consolidado com sucesso.`);
+        onRefresh?.(data.mergedContact.id);
+      } catch (error) {
+        onToast(error.message || "Nao foi possivel aprovar o merge.");
+      }
+    });
   }
 
   return (
     <section id="product-architecture" className="mx-auto max-w-7xl px-4 pb-10 sm:px-6">
+      <span id="architecture" className="sr-only" />
+      <span id="api-docs" className="sr-only" />
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <section className="rounded-xl border border-line bg-white/[0.04] p-5">
           <div className="flex items-center gap-3">
@@ -212,7 +294,14 @@ export function ProductArchitecturePanel({ onToast, session, googleProviderToken
                 onChange={(event) => setCsvText(event.target.value)}
                 className="mt-3 min-h-32 w-full rounded-lg border border-line bg-black/25 p-3 text-sm text-white outline-none focus:border-amber/50"
               />
-              <button className="mt-3 h-10 w-full rounded-lg bg-amber text-sm font-black text-ink hover:bg-mint">Importar CSV</button>
+              {csvErrorMessage && (
+                <p className="mt-3 rounded-md border border-amber/30 bg-amber/10 px-3 py-2 text-xs font-bold text-amber">
+                  {csvErrorMessage}
+                </p>
+              )}
+              <button disabled={isCsvImporting} className="mt-3 h-10 w-full rounded-lg bg-amber text-sm font-black text-ink hover:bg-mint disabled:cursor-not-allowed disabled:opacity-60">
+                {isCsvImporting ? "Importando..." : "Importar CSV"}
+              </button>
             </form>
           )}
         </section>
@@ -229,24 +318,71 @@ export function ProductArchitecturePanel({ onToast, session, googleProviderToken
           </div>
           <div className="mt-5 grid gap-3">
             {duplicates.length ? (
-              duplicates.map((pair) => (
-                <article key={pair.id} className="rounded-lg border border-line bg-black/15 p-4">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {[pair.left, pair.right].map((contact) => (
-                      <div key={contact.id} className="rounded-lg bg-white/[0.04] p-3">
-                        <h3 className="font-black text-white">{contact.name}</h3>
-                        <p className="text-sm text-slate-400">{contact.email}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="rounded-md bg-cyan/10 px-2 py-1 text-xs font-bold text-cyan">{pair.reason}</span>
-                    <button onClick={() => mergeDuplicate(pair)} className="rounded-md bg-mint px-2 py-1 text-xs font-black text-ink">Aprovar merge</button>
-                    <button onClick={() => onToast(`${pair.left.name} e ${pair.right.name} estao destacados para decisao manual.`)} className="rounded-md border border-line px-2 py-1 text-xs font-bold text-white">Revisar</button>
-                    <button onClick={() => ignoreDuplicate(pair)} className="rounded-md border border-line px-2 py-1 text-xs font-bold text-slate-300">Ignorar</button>
-                  </div>
-                </article>
-              ))
+              duplicates.map((pair) => {
+                const isProcessing = processingDuplicateId === pair.id;
+                const reasonLabel = duplicateReasonLabel(pair.reason);
+
+                return (
+                  <article key={pair.id} className="relative rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-black/20 p-5 shadow-glow backdrop-blur-md transition-all">
+                    <div className="mb-4 flex items-center gap-2 text-xs font-bold text-cyan">
+                      <AlertTriangle size={15} />
+                      <span>
+                        {reasonLabel}
+                        {pair.matchValue && (
+                          <>
+                            : <strong className="rounded-md bg-white/10 px-1.5 py-0.5 font-mono text-slate-100">{pair.matchValue}</strong>
+                          </>
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {[pair.left, pair.right].map((contact, index) => (
+                        <div key={contact.id} className={`relative flex min-w-0 items-center gap-3 rounded-lg border bg-white/[0.035] p-4 ${index === 0 ? "border-mint/30" : "border-line"}`}>
+                          {index === 0 && (
+                            <span className="absolute right-2 top-2 rounded-md border border-mint/30 bg-mint/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-mint">
+                              Principal
+                            </span>
+                          )}
+
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-panel text-xs font-black uppercase text-slate-200">
+                            {contact.avatarUrl ? (
+                              <img src={contact.avatarUrl} alt={contact.name} className="h-full w-full object-cover" />
+                            ) : (
+                              <span>{contactInitials(contact)}</span>
+                            )}
+                          </div>
+
+                          <div className="min-w-0 pr-14">
+                            <h3 className="truncate text-sm font-black text-white">{contact.name}</h3>
+                            <p className="truncate text-xs text-slate-400">{contact.email || "Sem e-mail salvo"}</p>
+                            {contact.company && <p className="mt-0.5 truncate text-[11px] text-slate-500">{contact.company}</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-end gap-2 border-t border-white/10 pt-3">
+                      <button
+                        disabled={isProcessing}
+                        onClick={() => ignoreDuplicate(pair)}
+                        className="flex items-center gap-1 rounded-md border border-line px-3 py-1.5 text-xs font-bold text-slate-300 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <X size={14} />
+                        Ignorar
+                      </button>
+                      <button
+                        disabled={isProcessing}
+                        onClick={() => mergeDuplicate(pair)}
+                        className="flex items-center gap-1.5 rounded-md bg-mint px-4 py-1.5 text-xs font-black text-ink transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <Check size={14} />
+                        {isProcessing ? "Mesclando..." : "Aprovar merge"}
+                      </button>
+                    </div>
+                  </article>
+                );
+              })
             ) : (
               <div className="rounded-lg border border-dashed border-line p-8 text-center text-sm font-semibold text-slate-400">
                 Nenhum duplicado detectado por email ou telefone exatos.

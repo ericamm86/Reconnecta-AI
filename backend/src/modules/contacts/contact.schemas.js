@@ -9,6 +9,7 @@ export const contactSchema = z.object({
   email: z.string().email().optional().or(emptyString),
   emails: z.array(z.string().email()).default([]),
   phones: z.array(z.string().min(6)).default([]),
+  derivedDdds: z.array(z.string().min(2).max(3)).default([]),
   company: z.string().min(1).optional().or(emptyString),
   role: z.string().min(1).optional().or(emptyString),
   area: z.string().min(1).optional().or(emptyString),

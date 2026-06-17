@@ -3,11 +3,23 @@ import { z } from "zod";
 export const publicProfileSchema = z.object({
   isActive: z.boolean().default(false),
   displayName: z.string().min(2),
+  avatarUrl: z.string().url().optional().or(z.literal("")),
   headline: z.string().max(120).optional().or(z.literal("")),
   bio: z.string().max(600).optional().or(z.literal("")),
   company: z.string().max(120).optional().or(z.literal("")),
   location: z.string().max(120).optional().or(z.literal("")),
   tags: z.array(z.string().min(1)).default([]),
+  problemSolved: z.string().max(500).optional().or(z.literal("")),
+  currentDemand: z.string().max(500).optional().or(z.literal("")),
+  socialLinks: z
+    .object({
+      whatsapp: z.string().url().optional().or(z.literal("")),
+      instagram: z.string().url().optional().or(z.literal("")),
+      linkedin: z.string().url().optional().or(z.literal("")),
+      custom: z.string().url().optional().or(z.literal(""))
+    })
+    .partial()
+    .default({}),
   visibility: z.enum(["hidden", "network", "public"]).default("network")
 });
 

@@ -41,6 +41,10 @@ function uniq(values) {
   return [...new Set(values.filter(Boolean))];
 }
 
+function contactDdds(contact) {
+  return uniq([...(contact.derivedDdds || []), contact.derivedDdd]);
+}
+
 function filterContacts(contacts, filters) {
   return contacts.filter((contact) => {
     const searchHaystack = normalize([contact.name, contact.description, contact.problemSolved, contact.currentDemand, contact.company, contact.tags?.join(" ")].filter(Boolean).join(" "));
@@ -54,7 +58,7 @@ function filterContacts(contacts, filters) {
       contact.proximity >= filters.minimumScore &&
       (!filters.tag || contact.tags?.includes(filters.tag)) &&
       (!filters.source || contact.sourceOrigin === filters.source) &&
-      (!filters.ddd || contact.derivedDdd === filters.ddd) &&
+      (!filters.ddd || contact.derivedDdd === filters.ddd || contact.derivedDdds?.includes(filters.ddd)) &&
       (!filters.scope || contact.recordScopes?.includes(filters.scope)) &&
       (!filters.hasDemand || Boolean(contact.currentDemand)) &&
       (!filters.hasProblemSolved || Boolean(contact.problemSolved)) &&
@@ -64,16 +68,24 @@ function filterContacts(contacts, filters) {
   });
 }
 
-function buildContactNodes(contacts, focusedId) {
+function buildContactNodes(contacts, focusedId, manualPositions = {}) {
   const radius = contacts.length <= 3 ? 190 : 214;
   return contacts.map((contact, index) => {
     const angle = contacts.length === 1 ? -Math.PI / 2 : (index / contacts.length) * Math.PI * 2 - Math.PI / 2;
     const scorePull = (100 - contact.proximity) * 0.6;
+    const basePosition = {
+      x: center.x + Math.cos(angle) * (radius + scorePull),
+      y: center.y + Math.sin(angle) * (radius + scorePull)
+    };
+
     return {
       kind: "contact",
+      graphGroup: "person",
+      graphId: `person:${contact.id}`,
+      val: 25,
       ...contact,
-      x: center.x + Math.cos(angle) * (radius + scorePull),
-      y: center.y + Math.sin(angle) * (radius + scorePull),
+      ...basePosition,
+      ...(manualPositions[contact.id] || {}),
       faded: focusedId && focusedId !== contact.id && !contact.tags?.some((tag) => contacts.find((item) => item.id === focusedId)?.tags?.includes(tag))
     };
   });
@@ -81,9 +93,9 @@ function buildContactNodes(contacts, focusedId) {
 
 function conceptNodes(contacts) {
   const concepts = [
-    ...uniq(contacts.flatMap((contact) => contact.tags || [])).map((label) => ({ kind: "tag", label, Icon: Tags, color: tagColors[label] || "#61d7f4" })),
+    ...uniq(contacts.flatMap((contact) => contact.tags || [])).map((label) => ({ kind: "tag", graphGroup: "tag", label, Icon: Tags, color: tagColors[label] || "#61d7f4", val: 15 })),
     ...uniq(contacts.map((contact) => contact.sourceOrigin)).map((label) => ({ kind: "source", label, Icon: GitBranch, color: "#f6c66d" })),
-    ...uniq(contacts.map((contact) => contact.derivedDdd)).map((label) => ({ kind: "ddd", label: `DDD ${label}`, raw: label, Icon: MapPin, color: "#c7a7ff" })),
+    ...uniq(contacts.flatMap(contactDdds)).map((label) => ({ kind: "ddd", graphGroup: "ddd", label: `DDD ${label}`, raw: label, Icon: MapPin, color: "#c7a7ff", val: 12 })),
     ...uniq(contacts.map((contact) => contact.company)).map((label) => ({ kind: "organization", label, Icon: Building2, color: "#9fd3ff" }))
   ].slice(0, 10);
 
@@ -105,11 +117,11 @@ function buildEdges(contactNodes, conceptNodesList, focusedId) {
       const linked =
         (concept.kind === "tag" && contact.tags?.includes(concept.label)) ||
         (concept.kind === "source" && contact.sourceOrigin === concept.label) ||
-        (concept.kind === "ddd" && contact.derivedDdd === concept.raw) ||
+        (concept.kind === "ddd" && (contact.derivedDdd === concept.raw || contact.derivedDdds?.includes(concept.raw))) ||
         (concept.kind === "organization" && contact.company === concept.label);
 
       if (linked) {
-        edges.push({ source: contact, target: concept, type: concept.kind, active: !focusedId || contact.id === focusedId });
+        edges.push({ id: `edge:${contact.id}:${concept.id}`, source: contact, target: concept, type: concept.kind, active: !focusedId || contact.id === focusedId });
       }
     });
   });
@@ -118,12 +130,25 @@ function buildEdges(contactNodes, conceptNodesList, focusedId) {
     contactNodes.forEach((target) => {
       if (source.id === target.id || !source.currentDemand || !target.problemSolved) return;
       if (normalize(target.problemSolved).includes(normalize(source.currentDemand).split(" ")[0])) {
-        edges.push({ source, target, type: "POTENCIAL_MATCH", active: !focusedId || source.id === focusedId || target.id === focusedId });
+        edges.push({ id: `edge:${source.id}:match:${target.id}`, source, target, type: "POTENCIAL_MATCH", active: !focusedId || source.id === focusedId || target.id === focusedId });
       }
     });
   });
 
   return edges;
+}
+
+function buildGraphData(contacts, focusedId, manualPositions) {
+  const contactNodes = buildContactNodes(contacts, focusedId, manualPositions);
+  const conceptNodesList = conceptNodes(contacts);
+  const edges = buildEdges(contactNodes, conceptNodesList, focusedId);
+
+  return {
+    nodes: [...contactNodes, ...conceptNodesList],
+    contactNodes,
+    conceptNodes: conceptNodesList,
+    edges
+  };
 }
 
 export function ConnectionGraph({ contacts, selected, setSelected, onCreateContact }) {
@@ -146,12 +171,12 @@ export function ConnectionGraph({ contacts, selected, setSelected, onCreateConta
 
   const tags = useMemo(() => uniq(contacts.flatMap((contact) => contact.tags || [])), [contacts]);
   const sources = useMemo(() => uniq(contacts.map((contact) => contact.sourceOrigin)), [contacts]);
-  const ddds = useMemo(() => uniq(contacts.map((contact) => contact.derivedDdd)), [contacts]);
+  const ddds = useMemo(() => uniq(contacts.flatMap(contactDdds)), [contacts]);
   const visibleContacts = useMemo(() => filterContacts(contacts, filters), [contacts, filters]);
-  const baseContactNodes = useMemo(() => buildContactNodes(visibleContacts, focusedId), [visibleContacts, focusedId]);
-  const contactNodes = useMemo(() => baseContactNodes.map((node) => ({ ...node, ...(manualPositions[node.id] || {}) })), [baseContactNodes, manualPositions]);
-  const conceptNodesList = useMemo(() => conceptNodes(visibleContacts), [visibleContacts]);
-  const edges = useMemo(() => buildEdges(contactNodes, conceptNodesList, focusedId), [contactNodes, conceptNodesList, focusedId]);
+  const graphData = useMemo(() => buildGraphData(visibleContacts, focusedId, manualPositions), [visibleContacts, focusedId, manualPositions]);
+  const contactNodes = graphData.contactNodes;
+  const conceptNodesList = graphData.conceptNodes;
+  const edges = graphData.edges;
   const introductionPath = useMemo(() => {
     if (!selected || contactNodes.length < 2) return [];
     const source = contactNodes.find((node) => node.id === selected.id);

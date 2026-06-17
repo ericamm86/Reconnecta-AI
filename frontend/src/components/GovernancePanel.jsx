@@ -16,10 +16,14 @@ const fallbackContext = {
 const fallbackProfile = {
   isActive: true,
   displayName: "Equipe Reconnect AI",
+  avatarUrl: "",
   headline: "Network Intelligence CRM",
   company: "Reconnect AI",
   location: "Brasil",
   tags: ["crm", "ai", "network"],
+  problemSolved: "Organiza contatos privados e encontra rotas de relacionamento com IA.",
+  currentDemand: "Conectar pessoas certas sem expor a base privada de contatos.",
+  socialLinks: {},
   visibility: "network"
 };
 
@@ -108,6 +112,7 @@ export function GovernancePanel({ onToast }) {
 
   return (
     <section id="trust-layer" className="mx-auto max-w-7xl px-4 pb-10 sm:px-6">
+      <span id="settings" className="sr-only" />
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <section className="rounded-xl border border-line bg-white/[0.04] p-5">
           <div className="flex items-center gap-3">
@@ -156,7 +161,8 @@ export function GovernancePanel({ onToast }) {
           </div>
         </section>
 
-        <section className="rounded-xl border border-line bg-white/[0.04] p-5">
+        <section id="discover" className="rounded-xl border border-line bg-white/[0.04] p-5">
+          <span id="public-graph" className="sr-only" />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm uppercase tracking-[0.16em] text-cyan">Public network</p>
@@ -171,7 +177,7 @@ export function GovernancePanel({ onToast }) {
           </div>
 
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
-            <article className="rounded-lg border border-line bg-black/15 p-4">
+            <article id="profile" className="rounded-lg border border-line bg-black/15 p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h3 className="font-black text-white">{profile.displayName}</h3>
@@ -197,6 +203,12 @@ export function GovernancePanel({ onToast }) {
               <p className="mt-4 text-sm text-slate-300">
                 {profile.company} - {profile.location} - visibilidade {profile.visibility}
               </p>
+              {(profile.problemSolved || profile.currentDemand) && (
+                <div className="mt-4 grid gap-2 text-sm text-slate-300">
+                  {profile.problemSolved && <p><strong className="text-white">Resolve:</strong> {profile.problemSolved}</p>}
+                  {profile.currentDemand && <p><strong className="text-white">Busca:</strong> {profile.currentDemand}</p>}
+                </div>
+              )}
             </article>
 
             <form onSubmit={createGroup} className="rounded-lg border border-line bg-black/15 p-4">
@@ -222,7 +234,8 @@ export function GovernancePanel({ onToast }) {
             </form>
           </div>
 
-          <div className="mt-4 grid gap-3">
+          <div id="groups" className="mt-4 grid gap-3">
+            <span id="group-graph" className="sr-only" />
             {groups.map((group) => (
               <article key={group.id} className="rounded-lg border border-line bg-black/15 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">

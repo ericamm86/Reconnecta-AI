@@ -108,6 +108,7 @@ export const openApiDocument = {
           emails: { type: "array", items: { type: "string", format: "email" } },
           phones: { type: "array", items: { type: "string" } },
           derivedDdd: { type: "string", nullable: true },
+          derivedDdds: { type: "array", items: { type: "string" } },
           tags: { type: "array", items: { type: "string" } },
           sourceOrigin: { type: "string", enum: ["google_contacts", "csv", "manual", "apple_contacts", "outlook", "linkedin_export", "other"] },
           socialLinks: { type: "object" },

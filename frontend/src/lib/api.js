@@ -74,6 +74,7 @@ export const api = {
   createInteraction: (payload) => request("/api/interactions", { method: "POST", body: JSON.stringify(payload) }),
   intelligence: (id) => request(`/api/contacts/${id}/intelligence`, { method: "POST" }),
   recommendations: () => request("/api/intelligence/recommendations"),
+  generateStreamingChatResponse: (payload) => request("/api/intelligence/chat", { method: "POST", body: JSON.stringify(payload) }),
   me: () => request("/api/network/me"),
   publicProfile: () => request("/api/network/public-profile"),
   updatePublicProfile: (payload) => request("/api/network/public-profile", { method: "PUT", body: JSON.stringify(payload) }),

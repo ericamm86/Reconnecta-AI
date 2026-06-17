@@ -8,11 +8,15 @@ function mapPublicProfile(row) {
     ownerId: row.owner_id,
     isActive: row.is_active,
     displayName: row.display_name,
+    avatarUrl: row.avatar_url || "",
     headline: row.headline,
     bio: row.bio,
     company: row.company,
     location: row.location,
     tags: row.tags || [],
+    problemSolved: row.problem_solved || "",
+    currentDemand: row.current_demand || "",
+    socialLinks: row.social_links || {},
     visibility: row.visibility,
     updatedAt: row.updated_at
   };
@@ -100,16 +104,23 @@ export async function upsertPublicProfile(ownerId, payload) {
   }
 
   const result = await query(
-    `insert into public_profiles (owner_id, is_active, display_name, headline, bio, company, location, tags, visibility)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `insert into public_profiles (
+       owner_id, is_active, display_name, avatar_url, headline, bio, company, location,
+       tags, problem_solved, current_demand, social_links, visibility
+     )
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
      on conflict (owner_id) do update set
        is_active = excluded.is_active,
        display_name = excluded.display_name,
+       avatar_url = excluded.avatar_url,
        headline = excluded.headline,
        bio = excluded.bio,
        company = excluded.company,
        location = excluded.location,
        tags = excluded.tags,
+       problem_solved = excluded.problem_solved,
+       current_demand = excluded.current_demand,
+       social_links = excluded.social_links,
        visibility = excluded.visibility,
        updated_at = now()
      returning *`,
@@ -117,11 +128,15 @@ export async function upsertPublicProfile(ownerId, payload) {
       ownerId,
       payload.isActive,
       payload.displayName,
+      payload.avatarUrl || null,
       payload.headline || null,
       payload.bio || null,
       payload.company || null,
       payload.location || null,
       payload.tags,
+      payload.problemSolved || null,
+      payload.currentDemand || null,
+      JSON.stringify(payload.socialLinks || {}),
       payload.visibility
     ]
   );
@@ -135,7 +150,7 @@ export async function listDirectory(filters = {}) {
     return db.publicProfiles
       .filter((profile) => profile.isActive && profile.visibility !== "hidden")
       .filter((profile) => {
-        const haystack = `${profile.displayName} ${profile.headline} ${profile.company} ${profile.location} ${profile.tags.join(" ")}`.toLowerCase();
+        const haystack = `${profile.displayName} ${profile.headline} ${profile.company} ${profile.location} ${profile.problemSolved} ${profile.currentDemand} ${profile.tags.join(" ")}`.toLowerCase();
         return search ? haystack.includes(search) : true;
       });
   }
@@ -144,7 +159,7 @@ export async function listDirectory(filters = {}) {
   const clauses = ["is_active = true", "visibility <> 'hidden'"];
   if (filters.search) {
     params.push(`%${filters.search}%`);
-    clauses.push(`(display_name ilike $${params.length} or headline ilike $${params.length} or company ilike $${params.length})`);
+    clauses.push(`(display_name ilike $${params.length} or headline ilike $${params.length} or company ilike $${params.length} or problem_solved ilike $${params.length} or current_demand ilike $${params.length})`);
   }
   const result = await query(`select * from public_profiles where ${clauses.join(" and ")} order by updated_at desc`, params);
   return result.rows.map(mapPublicProfile);

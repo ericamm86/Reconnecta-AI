@@ -18,10 +18,16 @@ import { generateConnectionIntelligence } from "../intelligence/intelligence.ser
 
 export const contactsRouter = express.Router();
 
+function sanitizeGooglePhone(value) {
+  const digitsOnly = String(value || "").replace(/\D/g, "");
+  if (!digitsOnly) return "";
+  return digitsOnly.startsWith("55") ? `+${digitsOnly}` : digitsOnly;
+}
+
 contactsRouter.get(
   "/",
   asyncHandler(async (req, res) => {
-    const data = await listContacts(req.user.id, req.query);
+    const data = await listContacts(req.user, req.query);
     res.json({ data });
   })
 );
@@ -37,7 +43,7 @@ contactsRouter.get(
 contactsRouter.get(
   "/graph/internal",
   asyncHandler(async (req, res) => {
-    const data = await buildInternalGraph(req.user.id);
+    const data = await buildInternalGraph(req.user);
     res.json({ data });
   })
 );
@@ -65,32 +71,52 @@ contactsRouter.post(
 
     const payload = await response.json();
     const rows = (payload.connections || [])
-      .map((person) => ({
-        name: person.names?.[0]?.displayName,
-        avatarUrl: person.photos?.[0]?.url || "",
-        description: person.biographies?.[0]?.value || "",
-        email: person.emailAddresses?.[0]?.value || "",
-        emails: (person.emailAddresses || []).map((email) => email.value).filter(Boolean),
-        phones: (person.phoneNumbers || []).map((phone) => phone.value).filter(Boolean),
-        company: person.organizations?.[0]?.name || "",
-        role: person.organizations?.[0]?.title || "",
-        tags: ["google_contacts"],
-        sourceOrigin: "google_contacts",
-        socialLinks: {
-          custom: person.urls?.[0]?.value || ""
-        }
-      }))
+      .map((person) => {
+        const cleanPhones = [
+          ...new Set((person.phoneNumbers || []).map((phone) => sanitizeGooglePhone(phone.value)).filter(Boolean))
+        ];
+        const emails = [
+          ...new Set((person.emailAddresses || []).map((email) => email.value?.toLowerCase()).filter(Boolean))
+        ];
+        const googleUrl = person.urls?.[0]?.value || "";
+
+        return {
+          name: person.names?.[0]?.displayName,
+          avatarUrl: person.photos?.[0]?.url || "",
+          description: person.biographies?.[0]?.value || "",
+          email: emails[0] || "",
+          emails,
+          phones: cleanPhones,
+          company: person.organizations?.[0]?.name || "",
+          role: person.organizations?.[0]?.title || "",
+          tags: ["google_contacts"],
+          sourceOrigin: "google_contacts",
+          problemSolved: "",
+          currentDemand: "",
+          internalNotes: "Importado via Google Contacts Integration.",
+          socialLinks: {
+            custom: googleUrl
+          },
+          customValues: {
+            googleUrl
+          }
+        };
+      })
       .filter((contact) => contact.name);
 
     const data = await importContacts(req.user.id, { source: "google_contacts", rows });
-    res.status(202).json({ data });
+    res.status(202).json({
+      success: true,
+      message: `${rows.length} contatos enfileirados para importacao e deduplicacao.`,
+      data
+    });
   })
 );
 
 contactsRouter.get(
   "/:id",
   asyncHandler(async (req, res) => {
-    const contact = await getContact(req.user.id, req.params.id);
+    const contact = await getContact(req.user, req.params.id);
     if (!contact) return res.status(404).json({ error: "Contact not found" });
     const timeline = await listInteractions(contact.id);
     res.json({ data: { ...contact, timeline } });
@@ -147,7 +173,7 @@ contactsRouter.delete(
 contactsRouter.post(
   "/:id/intelligence",
   asyncHandler(async (req, res) => {
-    const contact = await getContact(req.user.id, req.params.id);
+    const contact = await getContact(req.user, req.params.id);
     if (!contact) return res.status(404).json({ error: "Contact not found" });
     const data = await generateConnectionIntelligence(contact);
     res.json({ data });

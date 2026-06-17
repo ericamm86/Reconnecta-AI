@@ -36,6 +36,7 @@ export interface NetworkGraphNode {
   userId?: string;
   groupId?: string;
   ddd?: string;
+  ddds?: string[];
   score?: number;
   sourceOrigin?: string;
   scope?: RecordScope[];
