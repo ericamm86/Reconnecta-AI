@@ -22,8 +22,6 @@ const screens = [
 
 const importSources = [
   ["Google Contacts", "Fluxo real via Google API", "Obrigatorio"],
-  ["CSV", "Parser estruturado por colunas", "Ativo"],
-  ["Manual", "Formulario passo a passo", "Ativo"],
   ["Apple Contacts", "Integracao planejada para uma proxima versao", "Em breve"],
   ["Microsoft Outlook", "Integracao planejada para uma proxima versao", "Em breve"],
   ["LinkedIn Export", "Sincronizacao planejada para uma proxima versao", "Em breve"]
@@ -33,6 +31,7 @@ export function ProductArchitecturePanel({ onToast, session, googleProviderToken
   const [duplicates, setDuplicates] = useState([]);
   const [graph, setGraph] = useState(null);
   const [csvText, setCsvText] = useState("name,email,phones,tags\nAna Torres,ana@example.com,+55 85 98888-0000,\"startup,design\"");
+  const [csvOpen, setCsvOpen] = useState(false);
 
   useEffect(() => {
     Promise.all([api.duplicates(), api.internalGraph()])
@@ -154,6 +153,26 @@ export function ProductArchitecturePanel({ onToast, session, googleProviderToken
           </div>
 
           <div className="mt-5 grid gap-3">
+            <article className="flex items-center justify-between gap-3 rounded-lg border border-line bg-black/15 p-3">
+              <div>
+                <h3 className="font-black text-white">CSV</h3>
+                <p className="text-sm text-slate-400">Parser estruturado por colunas</p>
+              </div>
+              <button onClick={() => setCsvOpen((current) => !current)} className="rounded-md bg-amber px-2 py-1 text-xs font-black text-ink">
+                {csvOpen ? "Fechar" : "Abrir"}
+              </button>
+            </article>
+
+            <article className="flex items-center justify-between gap-3 rounded-lg border border-line bg-black/15 p-3">
+              <div>
+                <h3 className="font-black text-white">Manual</h3>
+                <p className="text-sm text-slate-400">Cadastro de contato individual</p>
+              </div>
+              <button onClick={() => window.dispatchEvent(new CustomEvent("reconnect:create-contact"))} className="rounded-md bg-mint px-2 py-1 text-xs font-black text-ink">
+                Criar
+              </button>
+            </article>
+
             {importSources.map(([name, detail, status]) => (
               <article key={name} className="flex items-center justify-between gap-3 rounded-lg border border-line bg-black/15 p-3">
                 <div>
@@ -165,7 +184,7 @@ export function ProductArchitecturePanel({ onToast, session, googleProviderToken
                     {session?.provider_token || googleProviderToken ? "Importar" : "Conectar"}
                   </button>
                 ) : (
-                  <span title={status === "Em breve" ? "Funcionalidade fora do escopo do MVP, com interface reservada para evolucao." : ""} className={`rounded-md px-2 py-1 text-xs font-black ${status === "Em breve" ? "bg-white/8 text-slate-400" : "bg-mint/10 text-mint"}`}>
+                  <span title="Funcionalidade fora do escopo do MVP, com interface reservada para evolucao." className="cursor-default select-none rounded-md border border-line bg-transparent px-2 py-1 text-xs font-black text-slate-500">
                     {status}
                   </span>
                 )}
@@ -173,15 +192,17 @@ export function ProductArchitecturePanel({ onToast, session, googleProviderToken
             ))}
           </div>
 
-          <form onSubmit={importCsv} className="mt-4 rounded-lg border border-line bg-black/15 p-4">
-            <h3 className="font-black text-white">CSV estruturado</h3>
-            <textarea
-              value={csvText}
-              onChange={(event) => setCsvText(event.target.value)}
-              className="mt-3 min-h-32 w-full rounded-lg border border-line bg-black/25 p-3 text-sm text-white outline-none focus:border-amber/50"
-            />
-            <button className="mt-3 h-10 w-full rounded-lg bg-amber text-sm font-black text-ink hover:bg-mint">Importar CSV</button>
-          </form>
+          {csvOpen && (
+            <form onSubmit={importCsv} className="mt-4 rounded-lg border border-line bg-black/15 p-4">
+              <h3 className="font-black text-white">CSV estruturado</h3>
+              <textarea
+                value={csvText}
+                onChange={(event) => setCsvText(event.target.value)}
+                className="mt-3 min-h-32 w-full rounded-lg border border-line bg-black/25 p-3 text-sm text-white outline-none focus:border-amber/50"
+              />
+              <button className="mt-3 h-10 w-full rounded-lg bg-amber text-sm font-black text-ink hover:bg-mint">Importar CSV</button>
+            </form>
+          )}
         </section>
       </div>
 

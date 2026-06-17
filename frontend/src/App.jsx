@@ -104,6 +104,15 @@ function App() {
   }, [auth.session]);
 
   useEffect(() => {
+    function openCreateContact() {
+      setContactModalOpen(true);
+    }
+
+    window.addEventListener("reconnect:create-contact", openCreateContact);
+    return () => window.removeEventListener("reconnect:create-contact", openCreateContact);
+  }, []);
+
+  useEffect(() => {
     if (!selected) return;
     api
       .contact(selected.id)
