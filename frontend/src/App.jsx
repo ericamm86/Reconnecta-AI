@@ -37,6 +37,18 @@ function getAuthErrorMessage(error) {
   const message = error?.message || "Nao foi possivel autenticar.";
   const waitMatch = message.match(/after\s+(\d+)\s+seconds/i);
 
+  if (/user already registered/i.test(message)) {
+    return "Essa conta ja existe. Entre com sua senha ou use recuperacao de senha.";
+  }
+
+  if (/invalid login credentials/i.test(message)) {
+    return "E-mail ou senha incorretos. Verifique os dados ou use recuperacao de senha.";
+  }
+
+  if (/email not confirmed/i.test(message)) {
+    return "Confirme seu e-mail antes de entrar. Você pode reenviar a confirmação.";
+  }
+
   if (/security purposes/i.test(message) && waitMatch) {
     return `Aguarde ${waitMatch[1]} segundos antes de tentar novamente.`;
   }
@@ -147,12 +159,22 @@ function App() {
   async function refreshData(preferredContactId) {
     try {
       const [dash, contactPayload] = await Promise.all([api.dashboard(), api.contacts()]);
-      setDashboard(dash.data);
-      setContacts(contactPayload.data);
+      const nextContacts = contactPayload.data?.length ? contactPayload.data : fallbackContacts;
+      const nextDashboard = contactPayload.data?.length
+        ? dash.data
+        : {
+            ...fallbackDashboard,
+            ...dash.data,
+            totalConnections: fallbackContacts.length,
+            activeConnections: fallbackContacts.filter((contact) => contact.proximity >= 70).length,
+            averageScore: Math.round(fallbackContacts.reduce((sum, contact) => sum + contact.proximity, 0) / fallbackContacts.length)
+          };
+      setDashboard(nextDashboard);
+      setContacts(nextContacts);
       setIntelligence(null);
       setSelected((current) => {
-        const preferred = contactPayload.data.find((contact) => contact.id === preferredContactId);
-        return preferred || contactPayload.data.find((contact) => contact.id === current?.id) || contactPayload.data[0];
+        const preferred = nextContacts.find((contact) => contact.id === preferredContactId);
+        return preferred || nextContacts.find((contact) => contact.id === current?.id) || nextContacts[0];
       });
     } catch {
       setDashboard(fallbackDashboard);
@@ -169,7 +191,21 @@ function App() {
 
     try {
       if (authMode === "register") {
-        await auth.signUpWithPassword(authForm);
+        try {
+          await auth.signUpWithPassword(authForm);
+        } catch (error) {
+          if (/user already registered/i.test(error?.message || "")) {
+            setAuthMode("login");
+            try {
+              await auth.signInWithPassword(authForm);
+              return;
+            } catch {
+              setToast("Essa conta ja existe. Entrei no modo Entrar; use sua senha ou recupere o acesso.");
+              return;
+            }
+          }
+          throw error;
+        }
         setAuthMode("login");
         setAuthForm((current) => ({ ...current, password: "" }));
         return;
@@ -199,6 +235,18 @@ function App() {
     setAuthSubmitting(true);
     try {
       await auth.requestPasswordReset(email);
+    } catch (error) {
+      setToast(getAuthErrorMessage(error));
+    } finally {
+      setAuthSubmitting(false);
+    }
+  }
+
+  async function handleResendConfirmation(email) {
+    if (authSubmitting) return;
+    setAuthSubmitting(true);
+    try {
+      await auth.resendConfirmation(email);
     } catch (error) {
       setToast(getAuthErrorMessage(error));
     } finally {
@@ -308,6 +356,7 @@ function App() {
           onSubmit={handleAuth}
           onOAuth={handleOAuth}
           onPasswordReset={handlePasswordReset}
+          onResendConfirmation={handleResendConfirmation}
           submitting={authSubmitting}
         />
         {toast && <Toast text={toast} onClose={() => setToast("")} />}

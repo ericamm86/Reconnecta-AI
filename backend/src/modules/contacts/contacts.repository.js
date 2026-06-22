@@ -61,6 +61,11 @@ function normalizeAccess(userOrOwnerId) {
   };
 }
 
+function canAccessLocalContact(contact, accessOrOwnerId) {
+  const id = typeof accessOrOwnerId === "object" ? accessOrOwnerId.id : accessOrOwnerId;
+  return contact.ownerId === id || contact.ownerId === "demo-user" || id === "demo-user";
+}
+
 function filterValue(filters, camelKey, snakeKey = camelKey) {
   return filters[camelKey] ?? filters[snakeKey];
 }
@@ -109,7 +114,7 @@ export async function listContacts(userOrOwnerId, filters = {}) {
     const source = filterValue(filters, "sourceOrigin", "source_origin") || filters.source || "";
     const scope = filterValue(filters, "recordScope", "record_scope") || filters.scope || "";
     return db.contacts
-      .filter((contact) => contact.ownerId === access.id || access.id === "demo-user")
+      .filter((contact) => canAccessLocalContact(contact, access))
       .filter((contact) => {
         const haystack = `${contact.name} ${contact.email} ${contact.company} ${contact.role} ${contact.area} ${contact.description} ${contact.problemSolved} ${contact.currentDemand} ${contact.tags?.join(" ")}`.toLowerCase();
         return search ? haystack.includes(search) : true;
@@ -188,7 +193,7 @@ export async function listContacts(userOrOwnerId, filters = {}) {
 async function getOwnedContact(ownerId, id) {
   if (!hasDatabase) {
     const db = await readLocalDb();
-    return db.contacts.find((contact) => contact.id === id && (contact.ownerId === ownerId || ownerId === "demo-user"));
+    return db.contacts.find((contact) => contact.id === id && canAccessLocalContact(contact, ownerId));
   }
 
   const result = await query("select * from contacts where owner_id = $1 and id = $2", [ownerId, id]);
@@ -200,7 +205,7 @@ export async function getContact(userOrOwnerId, id) {
 
   if (!hasDatabase) {
     const db = await readLocalDb();
-    return db.contacts.find((contact) => contact.id === id && (contact.ownerId === access.id || access.id === "demo-user"));
+    return db.contacts.find((contact) => contact.id === id && canAccessLocalContact(contact, access));
   }
 
   const result = await query(
@@ -349,7 +354,7 @@ export async function updateContact(ownerId, id, payload) {
 export async function deleteContact(ownerId, id) {
   if (!hasDatabase) {
     return updateLocalDb((localDb) => {
-      const index = localDb.contacts.findIndex((contact) => contact.id === id && (contact.ownerId === ownerId || ownerId === "demo-user"));
+      const index = localDb.contacts.findIndex((contact) => contact.id === id && canAccessLocalContact(contact, ownerId));
       if (index === -1) return false;
       localDb.contacts.splice(index, 1);
       for (let i = localDb.interactions.length - 1; i >= 0; i -= 1) {
