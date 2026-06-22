@@ -1,0 +1,12 @@
+{
+  "name": "reconnect-ai-workspace",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/start-local.cjs",
+    "start": "node scripts/start-local.cjs",
+    "diagnose": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\diagnose-reconnect-ai.ps1"
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}

@@ -63,6 +63,25 @@ Reconnect AI - Intelligent Network OS/
 
 ## Como Rodar Localmente
 
+### Um comando na raiz
+
+```bash
+npm run dev
+```
+
+Esse comando inicia backend e frontend no mesmo terminal, sem depender do wrapper `npm.cmd` para manter processos em segundo plano. Os logs tambem sao gravados em:
+
+```txt
+logs/backend.combined.log
+logs/frontend.combined.log
+```
+
+No Windows, voce tambem pode usar:
+
+```bat
+start-reconnect-ai.bat
+```
+
 ### Backend
 
 ```bash

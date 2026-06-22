@@ -7,7 +7,9 @@ build/
 .vercel/
 .DS_Store
 *.log
+*.err
 npm-debug.log*
+logs/
 
 # Local runtime data
 backend/src/data/local-db.json
