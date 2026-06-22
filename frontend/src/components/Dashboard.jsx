@@ -13,10 +13,10 @@ export function Dashboard({ dashboard, contacts, selected, setSelected, intellig
     .slice(0, 4);
   const mergeCount = contacts.filter((contact) => contact.hasMergeSuggestion).length;
   const stats = [
-    ["Total de conexoes", dashboard.totalConnections, Users],
+    ["Total de conexões", dashboard.totalConnections, Users],
     ["Grupos ativos", dashboard.activeGroups || 1, Signal],
     ["Score medio", `${dashboard.averageScore}%`, Radar],
-    ["Recomendacoes IA", dashboard.recommendations?.length || 0, BrainCircuit]
+    ["Recomendações IA", dashboard.recommendations?.length || 0, BrainCircuit]
   ];
 
   return (
@@ -40,7 +40,7 @@ export function Dashboard({ dashboard, contacts, selected, setSelected, intellig
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm uppercase tracking-[0.16em] text-mint">Grafo da rede</p>
-              <h2 className="mt-1 text-2xl font-black text-white">Mapa vivo de conexoes</h2>
+              <h2 className="mt-1 text-2xl font-black text-white">Mapa vivo de conexões</h2>
             </div>
             <div className="flex gap-2">
               <button onClick={() => exportContactsCsv(contacts)} className="inline-flex h-10 items-center gap-2 rounded-lg border border-line px-3 text-sm font-bold text-slate-200 hover:bg-white/8">
@@ -132,7 +132,7 @@ export function Dashboard({ dashboard, contacts, selected, setSelected, intellig
             <h2 className="font-black text-white">Duplicados</h2>
           </div>
           <p className="mt-4 text-4xl font-black text-white">{mergeCount}</p>
-          <p className="mt-2 text-sm text-slate-400">sugestoes pendentes para revisao manual.</p>
+          <p className="mt-2 text-sm text-slate-400">sugestões pendentes para revisão manual.</p>
         </section>
 
         <section className="rounded-xl border border-line bg-white/[0.04] p-5">

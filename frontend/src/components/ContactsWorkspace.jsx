@@ -157,7 +157,7 @@ export function ContactsWorkspace({ contacts, selected, onSelect, onCreateContac
               <UsersRound className="text-mint" />
               <div>
                 <p className="text-sm uppercase tracking-[0.16em] text-mint">Contatos</p>
-                <h2 className="text-xl font-black text-white">Lista performatica</h2>
+                <h2 className="text-xl font-black text-white">Lista performática</h2>
               </div>
             </div>
             {mergeCount > 0 && (
@@ -201,7 +201,7 @@ export function ContactsWorkspace({ contacts, selected, onSelect, onCreateContac
               <option value="">Escopo</option>
               <option value="INTERNAL_PRIVATE">Interno</option>
               <option value="GROUP_CONTACT">Grupo</option>
-              <option value="PUBLIC_PLATFORM_PROFILE">Publico</option>
+              <option value="PUBLIC_PLATFORM_PROFILE">Público</option>
             </select>
           </div>
 
@@ -252,7 +252,7 @@ export function ContactsWorkspace({ contacts, selected, onSelect, onCreateContac
                     )}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan">Visao 360</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan">Visão 360</p>
                     <h2 className="mt-0.5 truncate text-2xl font-black text-white">{selected.name}</h2>
                     <p className="mt-0.5 truncate text-sm text-slate-400">
                       {selected.role || "Sem cargo"} {selected.company ? `em ${selected.company}` : ""}
@@ -340,7 +340,7 @@ export function ContactsWorkspace({ contacts, selected, onSelect, onCreateContac
           ) : (
             <div className="flex min-h-[300px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 p-8 text-center text-slate-500">
               <p className="max-w-xs text-sm leading-5">
-                Selecione uma conexao no painel ou no grafo para expandir a inteligencia e a visao de networking 360.
+                Selecione uma conexão no painel ou no grafo para expandir a inteligência e a visão de networking 360.
               </p>
             </div>
           )}

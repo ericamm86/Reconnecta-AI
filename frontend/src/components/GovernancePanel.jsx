@@ -69,8 +69,8 @@ export function GovernancePanel({ onToast }) {
 
   const matrix = useMemo(
     () => [
-      ["Visitante", "Landing e autenticacao", "Sem acesso a dados privados"],
-      ["Usuario padrao", "CRM privado, perfil publico e grupos como membro", "Pode aceitar convites e editar a propria presenca publica"],
+      ["Visitante", "Landing e autenticação", "Sem acesso a dados privados"],
+      ["Usuário padrão", "CRM privado, perfil público e grupos como membro", "Pode aceitar convites e editar a propria presenca publica"],
       ["Administrador", "Grupos compartilhados, membros e campos customizados", "Controle operacional do plano superior"]
     ],
     []
@@ -166,7 +166,7 @@ export function GovernancePanel({ onToast }) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm uppercase tracking-[0.16em] text-cyan">Public network</p>
-              <h2 className="text-xl font-black text-white">Perfil publico e grupos</h2>
+              <h2 className="text-xl font-black text-white">Perfil público e grupos</h2>
             </div>
             <span className="rounded-lg border border-mint/30 bg-mint/10 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-mint">
               {context.role} / {context.plan}
@@ -226,7 +226,7 @@ export function GovernancePanel({ onToast }) {
                 value={groupForm.description}
                 onChange={(event) => setGroupForm({ ...groupForm, description: event.target.value })}
                 className="mt-3 h-10 w-full rounded-lg border border-line bg-black/25 px-3 text-sm text-white outline-none focus:border-mint/50"
-                placeholder="Descricao"
+                placeholder="Descrição"
               />
               <button className="mt-3 h-10 w-full rounded-lg bg-amber text-sm font-black text-ink transition hover:bg-mint">
                 Criar grupo

@@ -8,7 +8,7 @@ function isPasswordStrong(password) {
   return password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
 }
 
-export function AuthPanel({ mode, setMode, form, setForm, onSubmit, onOAuth, onPasswordReset, submitting = false }) {
+export function AuthPanel({ mode, setMode, form, setForm, onSubmit, onOAuth, onPasswordReset, onResendConfirmation, submitting = false }) {
   const isRegister = mode === "register";
   const emailHasError = form.email.length > 0 && !isEmailValid(form.email);
   const passwordHasError = form.password.length > 0 && isRegister && !isPasswordStrong(form.password);
@@ -26,13 +26,13 @@ export function AuthPanel({ mode, setMode, form, setForm, onSubmit, onOAuth, onP
             Sua rede de contatos, com inteligencia de verdade.
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-            Organize contatos, descubra oportunidades, visualize conexoes em grafo e use um copiloto para encontrar quem resolve cada problema na sua rede.
+            Organize contatos, descubra oportunidades, visualize conexões em grafo e use um copiloto para encontrar quem resolve cada problema na sua rede.
           </p>
           <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-2">
             {[
               ["CRM pessoal", "Historico, notas e demandas privadas.", UsersRound],
               ["Grupos compartilhados", "Hubs seguros para comunidades.", ShieldCheck],
-              ["Visualizacao em grafo", "Constelacao de pessoas, tags e DDDs.", Network],
+              ["Visualização em grafo", "Constelação de pessoas, tags e DDDs.", Network],
               ["Assistente de IA", "Busca contextual preparada para copiloto.", BrainCircuit]
             ].map(([title, text, Icon]) => (
               <div key={title} className="rounded-lg border border-line bg-white/[0.04] p-4">
@@ -131,7 +131,15 @@ export function AuthPanel({ mode, setMode, form, setForm, onSubmit, onOAuth, onP
           </label>
 
           {!isRegister && (
-            <div className="mt-3 flex justify-end">
+            <div className="mt-3 flex flex-wrap justify-end gap-x-4 gap-y-2">
+              <button
+                type="button"
+                onClick={() => onResendConfirmation?.(form.email)}
+                disabled={submitting || emailHasError || !form.email}
+                className="text-sm font-bold text-cyan transition hover:text-mint disabled:cursor-not-allowed disabled:text-slate-500"
+              >
+                Reenviar confirmação
+              </button>
               <button
                 type="button"
                 onClick={() => onPasswordReset?.(form.email)}

@@ -9,24 +9,24 @@ const screens = [
   ["Dashboard", "Metricas, alertas e atalhos", LayoutDashboard],
   ["Importar Contatos", "Google, CSV e manual", FileUp],
   ["Contatos", "Busca semantica, tags e DDD", UsersRound],
-  ["Detalhe do Contato", "Visao 360 e notas privadas", Columns3],
-  ["Grafo Interno", "Constelacao privada", Network],
+  ["Detalhe do Contato", "Visão 360 e notas privadas", Columns3],
+  ["Grafo Interno", "Constelação privada", Network],
   ["Grupos Compartilhados", "Hub de comunidades", UsersRound],
-  ["Grafo do Grupo", "Conexoes por grupo", Network],
-  ["Rede Publica", "Explorar perfis opt-in", ShieldCheck],
-  ["Grafo Publico", "Constelacao macro", Network],
+  ["Grafo do Grupo", "Conexões por grupo", Network],
+  ["Rede Pública", "Explorar perfis opt-in", ShieldCheck],
+  ["Grafo Público", "Constelação macro", Network],
   ["Perfil Proprio", "Dados e visibilidade", UserRoundCog],
   ["Chat", "Mensageria preparada para IA", MessageSquare],
-  ["Configuracoes", "Seguranca e notificacoes", Settings],
+  ["Configurações", "Seguranca e notificacoes", Settings],
   ["Admin Grupo", "Membros, convites e logs", ShieldCheck],
   ["Campos Personalizados", "Tipagem dinamica", Filter]
 ];
 
 const importSources = [
   ["Google Contacts", "Fluxo real via Google API", "Obrigatorio"],
-  ["Apple Contacts", "Integracao planejada para uma proxima versao", "Em breve"],
-  ["Microsoft Outlook", "Integracao planejada para uma proxima versao", "Em breve"],
-  ["LinkedIn Export", "Sincronizacao planejada para uma proxima versao", "Em breve"]
+  ["Apple Contacts", "Integração planejada para uma próxima versão", "Em breve"],
+  ["Microsoft Outlook", "Integração planejada para uma próxima versão", "Em breve"],
+  ["LinkedIn Export", "Sincronização planejada para uma próxima versão", "Em breve"]
 ];
 
 export function ProductArchitecturePanel({ onToast, session, googleProviderToken, onConnectGoogle, onRefresh }) {
@@ -241,8 +241,8 @@ export function ProductArchitecturePanel({ onToast, session, googleProviderToken
           <div className="flex items-center gap-3">
             <FileUp className="text-amber" />
             <div>
-              <p className="text-sm uppercase tracking-[0.16em] text-amber">Central de importacao</p>
-              <h2 className="text-xl font-black text-white">Ingestao e deduplicacao</h2>
+              <p className="text-sm uppercase tracking-[0.16em] text-amber">Central de importação</p>
+              <h2 className="text-xl font-black text-white">Ingestão e deduplicação</h2>
             </div>
           </div>
 
@@ -313,7 +313,7 @@ export function ProductArchitecturePanel({ onToast, session, googleProviderToken
             <GitMerge className="text-cyan" />
             <div>
               <p className="text-sm uppercase tracking-[0.16em] text-cyan">Revisao de duplicados</p>
-              <h2 className="text-xl font-black text-white">Fila consultiva de possiveis duplicados</h2>
+              <h2 className="text-xl font-black text-white">Fila consultiva de possíveis duplicados</h2>
             </div>
           </div>
           <div className="mt-5 grid gap-3">
@@ -409,7 +409,7 @@ export function ProductArchitecturePanel({ onToast, session, googleProviderToken
                   </span>
                 ))
               ) : (
-                <span className="text-sm text-slate-400">As tags aparecem como nos de agrupamento no payload do grafo.</span>
+                <span className="text-sm text-slate-400">As tags aparecem como nós de agrupamento no payload do grafo.</span>
               )}
             </div>
           </div>

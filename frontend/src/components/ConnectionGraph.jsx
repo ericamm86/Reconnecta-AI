@@ -232,7 +232,7 @@ export function ConnectionGraph({ contacts, selected, setSelected, onCreateConta
         <div className="inline-flex rounded-lg border border-line bg-black/20 p-1">
           {[
             ["internal", "Interno"],
-            ["public", "Publico/Grupos"]
+            ["public", "Público/Grupos"]
           ].map(([value, label]) => (
             <button key={value} onClick={() => setFilters((current) => ({ ...current, context: value }))} className={`h-9 rounded-md px-3 text-xs font-black uppercase tracking-[0.12em] ${filters.context === value ? "bg-mint text-ink" : "text-slate-300 hover:bg-white/8"}`}>
               {label}
@@ -242,14 +242,14 @@ export function ConnectionGraph({ contacts, selected, setSelected, onCreateConta
 
         <label className="flex min-w-56 items-center gap-3 rounded-lg border border-line bg-black/20 px-3 py-2 text-xs font-bold text-slate-300">
           <SlidersHorizontal size={16} className="text-cyan" />
-          Relevancia
+          Relevância
           <input type="range" min="0" max="90" value={filters.minimumScore} onChange={(event) => setFilters((current) => ({ ...current, minimumScore: Number(event.target.value) }))} className="accent-mint" />
           <span className="tabular-nums text-white">{filters.minimumScore}</span>
         </label>
       </div>
 
       <div className="grid gap-3 rounded-lg border border-line bg-black/20 p-3 lg:grid-cols-4">
-        <input value={filters.search} onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} className="h-10 rounded-lg border border-line bg-black/25 px-3 text-sm text-white outline-none focus:border-mint/50" placeholder="Nome, descricao ou problema" />
+        <input value={filters.search} onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} className="h-10 rounded-lg border border-line bg-black/25 px-3 text-sm text-white outline-none focus:border-mint/50" placeholder="Nome, descrição ou problema" />
         <select value={filters.tag} onChange={(event) => setFilters((current) => ({ ...current, tag: event.target.value }))} className="h-10 rounded-lg border border-line bg-black/25 px-3 text-sm text-white">
           <option value="">Todas as tags</option>
           {tags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
@@ -266,12 +266,12 @@ export function ConnectionGraph({ contacts, selected, setSelected, onCreateConta
           <option value="">Todos os escopos</option>
           <option value="INTERNAL_PRIVATE">Interno</option>
           <option value="GROUP_CONTACT">Grupo</option>
-          <option value="PUBLIC_PLATFORM_PROFILE">Publico</option>
+          <option value="PUBLIC_PLATFORM_PROFILE">Público</option>
         </select>
         {[
           ["hasDemand", "Demandas"],
           ["hasProblemSolved", "Resolve"],
-          ["linkedOnly", "Usuarios reais"]
+          ["linkedOnly", "Usuários reais"]
         ].map(([key, label]) => (
           <label key={key} className="flex h-10 items-center gap-2 rounded-lg border border-line bg-black/25 px-3 text-xs font-black uppercase tracking-[0.12em] text-slate-300">
             <input type="checkbox" checked={filters[key]} onChange={(event) => setFilters((current) => ({ ...current, [key]: event.target.checked }))} className="accent-mint" />
@@ -318,7 +318,7 @@ export function ConnectionGraph({ contacts, selected, setSelected, onCreateConta
           <div className="absolute left-1/2 top-1/2 grid h-20 w-20 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-mint/40 bg-ink/80 text-center shadow-glow sm:h-24 sm:w-24">
             <div>
               {filters.context === "internal" ? <GitBranch className="mx-auto text-mint" size={22} /> : <Globe2 className="mx-auto text-cyan" size={22} />}
-              <p className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-300">{filters.context === "internal" ? "Voce" : "Rede"}</p>
+              <p className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-300">{filters.context === "internal" ? "Você" : "Rede"}</p>
             </div>
           </div>
 
@@ -357,12 +357,16 @@ export function ConnectionGraph({ contacts, selected, setSelected, onCreateConta
           })}
         </div>
 
-        {!contactNodes.length && <div className="absolute inset-0 grid place-items-center p-6 text-center text-sm font-semibold text-slate-400">Nenhum contato passa pelos filtros atuais.</div>}
+        {!contactNodes.length && (
+          <div className="pointer-events-none absolute left-1/2 top-[calc(50%+4.75rem)] z-10 w-full max-w-sm -translate-x-1/2 px-6 text-center text-sm font-semibold leading-6 text-slate-400">
+            Nenhum contato passa pelos filtros atuais.
+          </div>
+        )}
 
         <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-ink/82 p-3 backdrop-blur-xl">
           <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
             <Route size={16} className="text-amber" />
-            {introductionPath.length >= 3 ? `${introductionPath[0].name} -> ${introductionPath[1].name} -> ${introductionPath[2].name}` : "Arraste o canvas, mova nos, use zoom e clique para ver detalhes."}
+            {introductionPath.length >= 3 ? `${introductionPath[0].name} -> ${introductionPath[1].name} -> ${introductionPath[2].name}` : "Arraste o canvas, mova nós, use zoom e clique para ver detalhes."}
           </div>
           <button onClick={onCreateContact} className="h-9 rounded-lg bg-mint px-3 text-xs font-black text-ink hover:bg-cyan">Novo contato</button>
         </div>

@@ -11,7 +11,7 @@ export function Timeline({ selected, interactions, interactionForm, setInteracti
             <MessageSquarePlus size={20} />
           </div>
           <div>
-            <p className="text-sm uppercase tracking-[0.16em] text-amber">Registro de interacoes</p>
+            <p className="text-sm uppercase tracking-[0.16em] text-amber">Registro de interações</p>
             <h2 className="text-xl font-black text-white">Registrar conversa</h2>
           </div>
         </div>
@@ -62,12 +62,12 @@ export function Timeline({ selected, interactions, interactionForm, setInteracti
             value={interactionForm.notesMarkdown}
             onChange={(event) => setInteractionForm({ ...interactionForm, notesMarkdown: event.target.value })}
             className="mt-2 min-h-36 w-full rounded-lg border border-line bg-black/25 p-3 text-white outline-none focus:border-amber/50"
-            placeholder="- Ponto importante&#10;- Proximo passo&#10;**Contexto relevante**"
+            placeholder="- Ponto importante&#10;- Próximo passo&#10;**Contexto relevante**"
           />
         </label>
 
         <button className="mt-4 h-11 w-full rounded-lg bg-amber text-sm font-black text-ink transition hover:bg-mint">
-          Salvar interacao
+          Salvar interação
         </button>
       </form>
 
@@ -76,7 +76,7 @@ export function Timeline({ selected, interactions, interactionForm, setInteracti
           <Clock3 className="text-mint" />
           <div>
             <p className="text-sm uppercase tracking-[0.16em] text-mint">Linha do tempo</p>
-            <h2 className="text-xl font-black text-white">{selected?.name || "Contato nao selecionado"}</h2>
+            <h2 className="text-xl font-black text-white">{selected?.name || "Contato não selecionado"}</h2>
           </div>
         </div>
 
@@ -98,7 +98,7 @@ export function Timeline({ selected, interactions, interactionForm, setInteracti
             ))
           ) : (
             <div className="rounded-lg border border-dashed border-line p-8 text-center text-slate-400">
-              Nenhuma interacao registrada para este contato.
+              Nenhuma interação registrada para este contato.
             </div>
           )}
         </div>

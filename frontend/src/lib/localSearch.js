@@ -182,7 +182,7 @@ export function searchContactsFromPrompt(prompt, contacts) {
     query: prompt,
     tokens,
     summary: results.length
-      ? `Identifiquei ${results.length} ${results.length === 1 ? "conexao altamente qualificada" : "conexoes altamente qualificadas"} na sua constelacao para esta demanda.`
+      ? `Identifiquei ${results.length} ${results.length === 1 ? "conexão altamente qualificada" : "conexões altamente qualificadas"} na sua constelação para esta demanda.`
       : "Nao encontrei correspondencias exatas para os criterios informados na base local.",
     results,
     action

@@ -10,13 +10,13 @@ export const mainNavItems = [
 
 export const secondaryNavItems = [
   ["Meu Perfil", "#profile", User],
-  ["Configuracoes", "#settings", Settings],
+  ["Configurações", "#settings", Settings],
   ["Documentacao API", "#api-docs", Code],
   ["Arquitetura", "#architecture", AppWindow]
 ];
 
 export const graphContextViews = [
   { id: "private", label: "Minha Rede", hash: "#contacts-graph" },
-  { id: "group", label: "Constelacao do Grupo", hash: "#group-graph" },
-  { id: "public", label: "Rede Publica Mundial", hash: "#public-graph" }
+  { id: "group", label: "Constelação do Grupo", hash: "#group-graph" },
+  { id: "public", label: "Rede Pública Mundial", hash: "#public-graph" }
 ];

@@ -5,9 +5,9 @@ import { searchContactsFromPrompt } from "../lib/localSearch";
 
 const starterPrompts = [
   "Quem resolve problemas de infraestrutura?",
-  "Quem presta servico de limpeza?",
-  "Quem esta ligado a investidores?",
-  "Adicione a tag Investidor ao contato Joao Martins"
+  "Quem presta serviço de limpeza?",
+  "Quem está ligado a investidores?",
+  "Adicione a tag Investidor ao contato João Martins"
 ];
 
 function ContactResultCard({ item, onSelect }) {
@@ -27,7 +27,7 @@ function ContactResultCard({ item, onSelect }) {
         <span className="rounded-md bg-cyan/10 px-2 py-1 text-xs font-black text-cyan">{score}</span>
       </div>
       <p className="mt-2 line-clamp-2 text-sm text-slate-300">
-        {contact.problemSolved || contact.description || contact.currentDemand || "Sem descricao enriquecida."}
+        {contact.problemSolved || contact.description || contact.currentDemand || "Sem descrição enriquecida."}
       </p>
       <div className="mt-2 flex flex-wrap gap-1">
         {(matchedTerms.length ? matchedTerms : contact.tags || []).slice(0, 4).map((term) => (
@@ -66,7 +66,7 @@ export function CopilotChat({ contacts, selected, onSelectContact, onToast }) {
     {
       id: "welcome",
       role: "assistant",
-      content: "Pergunte sobre quem resolve um problema, presta um servico ou deve receber uma tag. Eu busco na sua base local primeiro."
+      content: "Pergunte sobre quem resolve um problema, presta um serviço ou deve receber uma tag. Eu busco na sua base local primeiro."
     }
   ]);
 

@@ -63,8 +63,8 @@ export function Shell({ children, query, setQuery, session, onLogout, onCreateCo
   return (
     <div className="min-h-screen bg-ink pb-24 text-slate-100 lg:pb-0">
       <div className="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_20%_0%,rgba(73,214,168,0.16),transparent_34%),radial-gradient(circle_at_88%_12%,rgba(97,215,244,0.12),transparent_30%),linear-gradient(180deg,#080b12,#0b0f18_44%,#080b12)]" />
-      <aside className="fixed left-0 top-0 hidden h-full w-72 border-r border-line bg-black/20 px-5 py-6 backdrop-blur-xl lg:block">
-        <div className="flex items-center gap-3">
+      <aside className="fixed left-0 top-0 hidden h-full w-72 flex-col border-r border-line bg-black/20 px-5 py-6 backdrop-blur-xl lg:flex">
+        <div className="flex shrink-0 items-center gap-3">
           <div className="grid h-11 w-11 place-items-center rounded-lg border border-mint/30 bg-mint/10 text-mint shadow-glow">
             <Network size={23} />
           </div>
@@ -74,37 +74,39 @@ export function Shell({ children, query, setQuery, session, onLogout, onCreateCo
           </div>
         </div>
 
-        <nav className="mt-10 grid gap-2 text-sm font-semibold text-slate-300">
-          {mainNavItems.map(([label, href, Icon]) => {
-            const isActive = isActiveHash(currentHash, href);
+        <div className="mt-8 min-h-0 flex-1 overflow-y-auto pr-1">
+          <nav className="grid gap-2 text-sm font-semibold text-slate-300">
+            {mainNavItems.map(([label, href, Icon]) => {
+              const isActive = isActiveHash(currentHash, href);
 
-            return (
-              <a
-                key={label}
-                href={href}
-                aria-current={isActive ? "page" : undefined}
-                className={`flex items-center gap-3 rounded-lg px-3 py-3 transition hover:bg-white/8 hover:text-white ${isActive ? "bg-cyan/10 text-white ring-1 ring-cyan/20" : ""}`}
-              >
-                <Icon className={isActive ? "text-cyan" : ""} size={18} strokeWidth={isActive ? 2.5 : 2} />
-                {label}
+              return (
+                <a
+                  key={label}
+                  href={href}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 leading-5 transition hover:bg-white/8 hover:text-white ${isActive ? "bg-cyan/10 text-white ring-1 ring-cyan/20" : ""}`}
+                >
+                  <Icon className={`shrink-0 ${isActive ? "text-cyan" : ""}`} size={18} strokeWidth={isActive ? 2.5 : 2} />
+                  <span className="min-w-0 truncate">{label}</span>
+                </a>
+              );
+            })}
+          </nav>
+
+          <nav className="mt-6 grid gap-2 border-t border-line pt-4 text-sm font-semibold leading-5 text-slate-400">
+            {secondaryNavItems.map(([label, href, Icon]) => (
+              <a key={label} href={href} className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 transition hover:bg-white/8 hover:text-white">
+                <Icon className="shrink-0" size={17} />
+                <span className="min-w-0 truncate">{label}</span>
               </a>
-            );
-          })}
-        </nav>
+            ))}
+          </nav>
+        </div>
 
-        <nav className="mt-8 grid gap-1 border-t border-line pt-5 text-sm font-semibold text-slate-400">
-          {secondaryNavItems.map(([label, href, Icon]) => (
-            <a key={label} href={href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition hover:bg-white/8 hover:text-white">
-              <Icon size={17} />
-              {label}
-            </a>
-          ))}
-        </nav>
-
-        <div id="trust-layer" className="absolute bottom-6 left-5 right-5 rounded-lg border border-line bg-white/[0.04] p-4">
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Workspace</p>
-          <p className="mt-2 text-sm font-bold text-white">{session?.user?.email || "usuario@reconnect.ai"}</p>
-          <button onClick={onLogout} className="mt-3 text-xs font-bold text-mint transition hover:text-cyan">
+        <div id="trust-layer" className="mt-5 flex shrink-0 flex-col gap-2 rounded-lg border border-line bg-white/[0.04] p-4">
+          <p className="text-xs uppercase leading-5 tracking-[0.16em] text-slate-500">Workspace</p>
+          <p className="break-all text-sm font-bold leading-6 text-white">{session?.user?.email || "usuario@reconnect.ai"}</p>
+          <button onClick={onLogout} className="mt-1 self-start text-xs font-bold leading-5 text-mint transition hover:text-cyan">
             Encerrar sessao
           </button>
         </div>

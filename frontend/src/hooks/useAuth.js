@@ -35,7 +35,11 @@ function validateNewPassword(password) {
 }
 
 function getStoredLocalSession() {
-  if (supabase) return null;
+  if (supabase) {
+    window.localStorage.removeItem(localSessionKey);
+    return null;
+  }
+
   const stored = window.localStorage.getItem(localSessionKey);
   if (!stored) return null;
 
@@ -190,6 +194,25 @@ export function useAuth(onToast) {
     onToast?.("Enviamos um e-mail para redefinir sua senha.");
   }
 
+  async function resendConfirmation(email) {
+    validateEmailOnly(email);
+
+    if (!supabase) {
+      onToast?.("Confirmacao de e-mail exige Supabase configurado.");
+      return;
+    }
+
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: {
+        emailRedirectTo: redirectTo
+      }
+    });
+    if (error) throw error;
+    onToast?.("Enviamos um novo e-mail de confirmação.");
+  }
+
   async function updatePassword(password) {
     validateNewPassword(password);
 
@@ -222,6 +245,7 @@ export function useAuth(onToast) {
     signUpWithPassword,
     signInWithOAuth,
     requestPasswordReset,
+    resendConfirmation,
     updatePassword,
     signOut
   };
